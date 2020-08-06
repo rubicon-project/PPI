@@ -1,5 +1,6 @@
 
 import { getGlobal } from '../../src/prebidGlobal.js';
+import * as utils from '../../src/utils.js';
 
 export const HB_SOURCE_AUCTION = 'auction';
 export const HB_SOURCE_CACHE = 'cache';
@@ -22,16 +23,27 @@ export function requestBids(transactionObjects) {
   let aups = [];
   for (const source in groupedTransactionObjects) {
     for (const dest in groupedTransactionObjects[source]) {
-      groupedTransactionObjects[source][dest].forEach((transactionObject) => {
+      groupedTransactionObjects[source][dest].forEach((to) => {
         let aup = findMatchingAUP(to, adUnitPatterns);
         if (aup) {
           aups.push(aup);
         } else {
-          console.log("[PPI] No AUP matched for transaction object", transactionObject);
+          utils.logWarn('[PPI] No AUP matched for transaction object', to);
         }
-        
-        transactionResult.push(createTransactionResult(transactionObject, aup));
+
+        transactionResult.push(createTransactionResult(to, aup));
       });
+
+      switch (source) {
+        case HB_SOURCE_CACHE:
+          // get bids
+          // send to destination module
+          break;
+
+        case HB_SOURCE_AUCTION:
+          // hold an auction and send results to destination module
+          break;
+      }
     }
   }
 
@@ -79,24 +91,24 @@ function createTransactionResult(transactionObject, adUnitPattern) {
 
 function findMatchingAUP(transactionObject, adUnitPatterns) {
   return adUnitPatterns.find(aup => {
-    switch(transactionObject.type) {
-      case "slotPattern":
+    switch (transactionObject.type) {
+      case 'slotPattern':
         if (!aup.slotPattern) {
           break;
-        }  
-      
+        }
+
         // 'transactionObject.name' should be renamed
         // TODO: create new RegExp() out of regex strings
         return aup.slotPattern.test(transactionObject.name);
-      case "divPattern":
+      case 'divPattern':
         if (!aup.divPattern) {
           break;
-        }  
-      
+        }
+
         // 'transactionObject.name' should be renamed
         // TODO: create new RegExp() out of regex strings
         return aup.divPattern.test(transactionObject.name);
-      case "gptSlotObject":
+      case 'gptSlotObject':
         // NOTICE: gptSlotObjects -> gptSlotObject, in this demo we assume single gpt slot object per transaction object
         // we also assume that `transactionObject.name` carries the gpt slot object
         let match = true;
@@ -112,7 +124,7 @@ function findMatchingAUP(transactionObject, adUnitPatterns) {
       default:
         // this should never happen
         // if transaction object passed validation
-        console.log("[PPI] Invalid transaction object type", transactionObject.type)
+        utils.logError('[PPI] Invalid transaction object type', transactionObject.type)
     }
 
     return false;
@@ -126,9 +138,7 @@ const adUnitPatterns = [];
   adUnitPatterns: adUnitPatterns,
 };
 
-
 // ------------------------
 // Questions:
 //  - aup slot/div pattern matches against transaction object pattern? Both are patterns, shouldn't transaction object have concrete values?
 //  - transaction object of type 'gptSlotObjects' should recieve array of gpt slot objects, how? do we match one aup per passed gpt slot object? can we then break it one gpt slot object per transaction object?
-
