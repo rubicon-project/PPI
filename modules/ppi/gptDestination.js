@@ -1,4 +1,5 @@
 import { getGlobal } from '../../src/prebidGlobal.js';
+import { TransactionType } from './consts.js';
 
 window.googletag = window.googletag || {};
 let googletag = window.googletag;
@@ -37,7 +38,7 @@ function getDivIdGPTSlotMapping() {
 
 function getDivId(transactionObject) {
   switch (transactionObject.type) {
-    case 'gptSlotObject':
+    case TransactionType.GPT_SLOT_OBJECT:
       return transactionObject.name.getSlotElementId();
     default:
       return transactionObject.hbDestination.values.div;

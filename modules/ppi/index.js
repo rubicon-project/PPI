@@ -1,23 +1,10 @@
-
-import { getGlobal } from '../../src/prebidGlobal.js';
 import * as utils from '../../src/utils.js';
+import { getGlobal } from '../../src/prebidGlobal.js';
 import { send as gptSend } from './gptDestination.js';
 import { send as pageSend } from './pageDestination.js';
 import { send as callbackSend } from './callbackDestination.js';
 import { send as cacheSend } from './cacheDestination.js';
-
-export const HB_SOURCE_AUCTION = 'auction';
-export const HB_SOURCE_CACHE = 'cache';
-export const HB_DESTINATION_GPT = 'gpt';
-export const HB_DESTINATION_CACHE = 'cache';
-export const HB_DESTINATION_PAGE = 'page';
-export const HB_DESTINATION_CALLBACK = 'callback';
-
-export const TransactionType = {
-  SLOT_PATTERN: 'slotPattern',
-  DIV_PATTERN: 'divPattern',
-  GPT_SLOT_OBJECT: 'gptSlotObject'
-};
+import { TransactionType, HBSource, HBDestination } from './consts.js';
 
 /**
  * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
@@ -53,10 +40,10 @@ export function requestBids(transactionObjects) {
       });
 
       switch (source) {
-        case HB_SOURCE_CACHE:
+        case HBSource.CACHE:
           send(dest, destObjects);
           break;
-        case HB_SOURCE_AUCTION:
+        case HBSource.AUCTION:
           getGlobal().requestBids({
             adUnits: destObjects.map(destObj => destObj.adUnit).filter(a => a),
             bidsBackHandler: (bids) => {
@@ -91,16 +78,16 @@ export function addAdUnitPatterns(aups) {
 
 function send(destination, objects) {
   switch (destination) {
-    case HB_DESTINATION_GPT:
+    case HBDestination.GTP:
       gptSend(objects);
       break;
-    case HB_DESTINATION_PAGE:
+    case HBDestination.PAGE:
       pageSend(objects);
       break;
-    case HB_DESTINATION_CALLBACK:
+    case HBDestination.CALLBACK:
       callbackSend(objects);
       break;
-    case HB_DESTINATION_CACHE:
+    case HBDestination.CACHE:
       cacheSend(objects);
       break;
     default:
