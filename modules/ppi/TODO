@@ -1,0 +1,3 @@
+Questions:
+ - aup slot/div pattern matches against transaction object pattern? Both are patterns, shouldn't transaction object always have concrete values?
+ - transaction object of type 'gptSlotObjects' should recieve array of gpt slot objects, how? do we match one aup per passed gpt slot object? can we then break it one gpt slot object per transaction object?
