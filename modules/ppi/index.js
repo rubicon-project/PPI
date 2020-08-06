@@ -1,10 +1,10 @@
 
 import { getGlobal } from '../../src/prebidGlobal.js';
 import * as utils from '../../src/utils.js';
-import { gptSend } from './gptDestination.js';
-import { pageSend } from './pageDestination.js';
-import { callbackSend } from './callbackDestination.js';
-import { cacheSend } from './cacheDestination.js';
+import { send as gptSend } from './gptDestination.js';
+import { send as pageSend } from './pageDestination.js';
+import { send as callbackSend } from './callbackDestination.js';
+import { send as cacheSend } from './cacheDestination.js';
 
 export const HB_SOURCE_AUCTION = 'auction';
 export const HB_SOURCE_CACHE = 'cache';
@@ -58,7 +58,7 @@ export function requestBids(transactionObjects) {
           break;
         case HB_SOURCE_AUCTION:
           getGlobal().requestBids({
-            adUnits: destObjects.map(destObj => destObj.adUnit),
+            adUnits: destObjects.map(destObj => destObj.adUnit).filter(a => a),
             bidsBackHandler: (bids) => {
               send(dest, destObjects);
             }
@@ -177,11 +177,6 @@ function createAdUnit(adUnitPattern) {
     // copy pattern for conversion into adUnit
     adUnit = JSON.parse(JSON.stringify(adUnitPattern));
     adUnit.code = adUnitPattern.id;
-    if (adUnit.mediaTypes && adUnit.mediaTypes.banner) {
-      adUnit.mediaTypes.banner.sizes = adUnit.filteredSizes;
-    } else {
-      adUnit.sizes = adUnit.filteredSizes;
-    }
 
     // Remove pattern properties not included in adUnit
     delete adUnit.id;
