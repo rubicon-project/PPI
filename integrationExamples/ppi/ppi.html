@@ -94,8 +94,8 @@
                     },
                 }, {
                     id: "mag_2",
-                    slotPattern: "^.*header-bid-tag-1$",
-                    divPattern: "",
+                    slotPattern: "",
+                    divPattern: "^test-.$",
                     bids: [
                         {
                             bidder: 'appnexus',
@@ -135,8 +135,8 @@
                     }
                 },
                 {
-                    name: '/19968336/header-bid-tag-1',
-                    type: 'slotPattern',
+                    name: 'test-2',
+                    type: 'divPattern',
                     hbSource: 'auction',
                     hbDestination: {
                         type: 'gpt',
@@ -228,12 +228,12 @@
                 }
             },
             {
-                name: '/19968336/header-bid-tag-1',
-                type: 'slotPattern',
+                name: 'test-4',
+                type: 'divPattern',
                 hbSource: 'auction',
                 hbDestination: {
                     type: 'cache',
-                    // values: { div: 'test-2' }
+                    // values: { div: 'test-4' }
                 }
             },
         ];
@@ -249,8 +249,8 @@
                 }
             },
             {
-                name: '/19968336/header-bid-tag-1',
-                type: 'slotPattern',
+                name: 'test-4',
+                type: 'divPattern',
                 hbSource: 'cache',
                 hbDestination: {
                     type: 'gpt',
