@@ -1,0 +1,276 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>PPI Test Page</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="ppi.css">
+    <script>
+        // gpt initialization and slot definition handled by publisher
+        window.googletag = window.googletag || { cmd: [] };
+        googletag.cmd.push(() => {
+            googletag.pubads().disableInitialLoad();
+            googletag.pubads().enableSingleRequest();
+            googletag.pubads().enableAsyncRendering();
+            googletag.pubads().collapseEmptyDivs(true);
+
+            googletag.enableServices();
+
+            let adUnits = [
+                {
+                    divID: "test-1",
+                    slotId: "/19968336/header-bid-tag-0",
+                    sizes: [[300, 250], [300, 600]]
+                },
+                {
+                    divID: "test-2",
+                    slotId: "/19968336/header-bid-tag-1",
+                    sizes: [[300, 250], [300, 600]],
+                },
+                {
+                    divID: "test-3",
+                    slotId: "/19968336/header-bid-tag-0",
+                    sizes: [[300, 250], [300, 600]]
+                },
+                {
+                    divID: "test-4",
+                    slotId: "/19968336/header-bid-tag-1",
+                    sizes: [[300, 250], [300, 600]],
+                }
+            ];
+            // only store first 2 slots here
+            window.initialSlots = [];
+            for (const adunit of adUnits) {
+                let slot = googletag.defineSlot(adunit.slotId, adunit.sizes, adunit.divID).addService(googletag.pubads());
+                googletag.display(slot);
+                if (window.initialSlots.length < 2) {
+                    window.initialSlots.push(slot);
+                }
+            }
+            console.log("gpt enabled");
+        });
+    </script>
+    <script>
+        // pbjs initialization and configuration handled by publisher
+        window.pbjs = window.pbjs || { que: [] };
+        let pbjsConfig = {
+            useBidCache: true,
+            debug: true,
+            bidderTimeout: 10000,
+            rubicon: { singleRequest: true },
+            // add other prebid config here, like granularity, cmp, user syncs, bid aliases, etc.
+        }
+        window.pbjs.que.push(() => {
+            window.pbjs.ppi.addAdUnitPatterns(
+                [{
+                    id: "mag_1",
+                    slotPattern: "^.*header-bid-tag-0$",
+                    divPattern: "",
+                    bids: [
+                        {
+                            bidder: 'appnexus',
+                            params: {
+                                placementId: 13144370
+                            },
+                        },
+                        {
+                            bidder: 'rubicon',
+                            params: {
+                                accountId: '1001',
+                                siteId: '113932',
+                                zoneId: '535510'
+                            }
+                        }],
+                    mediaTypes: {
+                        banner: {
+                            sizes: [[300, 250], [300, 600]]
+                        },
+                    },
+                }, {
+                    id: "mag_2",
+                    slotPattern: "^.*header-bid-tag-1$",
+                    divPattern: "",
+                    bids: [
+                        {
+                            bidder: 'appnexus',
+                            params: {
+                                placementId: 13144370
+                            },
+                        },
+                        {
+                            bidder: 'rubicon',
+                            params: {
+                                accountId: '1001',
+                                siteId: '113932',
+                                zoneId: '535510'
+                            }
+                        }],
+                    mediaTypes: {
+                        banner: {
+                            sizes: [[300, 250], [300, 600]]
+                        },
+                    },
+                }
+                ]
+            );
+            pbjs.setConfig(pbjsConfig);
+        });
+    </script>
+    <script>
+        window.pbjs.que.push(() => {
+            let transactionObjects = [
+                {
+                    name: '/19968336/header-bid-tag-0',
+                    type: 'slotPattern',
+                    hbSource: 'auction',
+                    hbDestination: {
+                        type: 'gpt',
+                        values: { div: 'test-1' }
+                    }
+                },
+                {
+                    name: '/19968336/header-bid-tag-1',
+                    type: 'slotPattern',
+                    hbSource: 'auction',
+                    hbDestination: {
+                        type: 'gpt',
+                        values: { div: 'test-2' }
+                    }
+                },
+
+            ];
+            pbjs.ppi.requestBids(transactionObjects);
+        });
+    </script>
+
+    <script type="text/javascript" src="https://securepubads.g.doubleclick.net/tag/js/gpt.js" async></script>
+    <script async src="../../build/dev/prebid.js"></script>
+</head>
+
+<body>
+    <div class="instructions">
+        <h1> PPI Test Pages - PBJS and GPT handled by publisher </h1>
+
+        <p>
+            The following page provides an example how to use ppi only for refreshes, pbjs and gpt are handled by
+            publisher.
+            This example is mostly for publishers that are already using gpt and pbjs on their pages,
+            simplified way of refreshing adUnits.
+            Example has 3 different scripts: prebid.js embedded script that is setting pbjs config and embedded script
+            executing ppi refresh.
+            Plus there is gpt.js loaded and handled in this page, as an example of how publisher manages gpt.
+        </p>
+        <p>
+            In following example, when page is loaded, embedded script will refresh adUnits <b>test-1</b> and
+            <b>test-2</b>.
+            This means, ppi will instruct pbjs to hold HB auction for those adUnits, and then it will instruct gpt to
+            refresh appropriate slots.
+            Because gpt is handled by publisher, ppi expects that before refresh is instructed, all gpt slots are
+            already created.
+        </p>
+        <p>
+            This example has 3 buttons to test functionality.
+        <ul>
+            <li>
+                Destroy initial slots - destroys initial slots on the page ('test-1' and 'test-2'). Note: destruction is
+                needed, because this page is using test dfp account for lineitem targeting.
+                There are limited number of creatives on that account, so dfp will prevent serving ads in slots 'test-3'
+                and 'test-4' if slots 'test-1' and 'test-2' are not destroyed.
+            </li>
+            <li>
+                Fetch bids for all adUnits - clicking this button ppi will instruct pbjs to hold HB auction for all (in
+                this case 'test-1' and 'test-2') adUnits
+            </li>
+            <li>
+                Refresh from cache both adunits in divs 'test-3' and 'test-4' - clicking this button will refresh slots
+                'test-3' and 'test-4' and it will use all cached bids pbjs has
+            </li>
+        </ul>
+        </p>
+
+        <div id="console_message" class="info">
+            <p>
+                If you have not done so already, open your browser console and refresh this page.
+                Once the page is loaded you will see ads in divs 'test-1' and 'test-2'.
+                Then destroy initial slots.
+                After destroying slots you can proceed with caching bids and refreshing from cache.
+                If there are any bids in cache, refreshing from cache will cause ads to render in divs 'test-3' and
+                'test-4'.
+            </p>
+            <p>
+                You can do your own experiments in debug console with refresh logic, for example:
+                change number of adUnits for which you want to cache bids,
+                use different kind of adUnit-div remappings when rendering ads,
+                don't provide any adUnit nor any kind of remmapings to see how ppi works with default adUnits and
+                mappings,
+                etc.
+            </p>
+        </div>
+        <br><br>
+    </div>
+    <br>
+
+    <script>
+        window.transactionToCache = [
+            {
+                name: '/19968336/header-bid-tag-0',
+                type: 'slotPattern',
+                hbSource: 'auction',
+                hbDestination: {
+                    type: 'cache',
+                    // values: { div: 'test-1' }
+                }
+            },
+            {
+                name: '/19968336/header-bid-tag-1',
+                type: 'slotPattern',
+                hbSource: 'auction',
+                hbDestination: {
+                    type: 'cache',
+                    // values: { div: 'test-2' }
+                }
+            },
+        ];
+
+        window.transactionFromCache = [
+            {
+                name: '/19968336/header-bid-tag-0',
+                type: 'slotPattern',
+                hbSource: 'cache',
+                hbDestination: {
+                    type: 'gpt',
+                    values: { div: 'test-3' }
+                }
+            },
+            {
+                name: '/19968336/header-bid-tag-1',
+                type: 'slotPattern',
+                hbSource: 'cache',
+                hbDestination: {
+                    type: 'gpt',
+                    values: { div: 'test-4' }
+                }
+            },
+        ];
+    </script>
+    <button onclick='googletag.destroySlots(window.initialSlots)'>Destroy initial slots</button>
+    <button onclick='pbjs.ppi.requestBids(window.transactionToCache)'>Fetch bids for both adunits</button>
+    <button onclick='pbjs.ppi.requestBids(window.transactionFromCache)'>Refresh
+        from cache both adunits in divs 'test-3' and 'test-4'</button>
+
+    <div id="test-1" class="adunit"></div>
+    <div id="test-2" class="adunit"></div>
+    <div id="test-3" class="adunit"></div>
+    <div id="test-4" class="adunit"></div>
+    <br />
+    <br />
+    <br />
+</body>
+
+</html>

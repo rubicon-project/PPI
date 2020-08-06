@@ -80,7 +80,7 @@ export function addAdUnitPatterns(aups) {
         aup.divPattern = new RegExp(aup.divPattern, 'i');
       }
       if (aup.slotPattern) {
-        aup.divPattern = new RegExp(aup.slotPattern, 'i');
+        aup.slotPattern = new RegExp(aup.slotPattern, 'i');
       }
       adUnitPatterns.push(aup);
     } catch (e) {

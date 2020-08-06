@@ -9,6 +9,9 @@ export function send(destinationObjects) {
       utils.logWarn('[PPI] No bid for ad unit code ', destObj.adUnit.code);
       return;
     }
+    if (Array.isArray(highestBid)) {
+      highestBid = highestBid[0];
+    }
 
     let targetDiv = destObj.transactionObject.hbDestination.values.div;
     let targetEl = document.getElementById(targetDiv);
