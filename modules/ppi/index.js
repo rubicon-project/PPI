@@ -1,7 +1,10 @@
 
 import { getGlobal } from '../../src/prebidGlobal.js';
 import * as utils from '../../src/utils.js';
-import { send } from './gptDestination.js';
+import { gptSend } from './gptDestination.js';
+import { pageSend } from './pageDestination.js';
+import { callbackSend } from './callbackDestination.js';
+import { cacheSend } from './cacheDestination.js';
 
 export const HB_SOURCE_AUCTION = 'auction';
 export const HB_SOURCE_CACHE = 'cache';
@@ -9,6 +12,7 @@ export const HB_DESTINATION_GPT = 'gpt';
 export const HB_DESTINATION_CACHE = 'cache';
 export const HB_DESTINATION_PAGE = 'page';
 export const HB_DESTINATION_CALLBACK = 'callback';
+
 export const TransactionType = {
   SLOT_PATTERN: 'slotPattern',
   DIV_PATTERN: 'divPattern',
@@ -50,22 +54,40 @@ export function requestBids(transactionObjects) {
 
       switch (source) {
         case HB_SOURCE_CACHE:
-          send(destObjects);
+          send(dest, destObjects);
           break;
-
         case HB_SOURCE_AUCTION:
           getGlobal().requestBids({
             adUnits: destObjects.map(destObj => destObj.adUnit),
             bidsBackHandler: (bids) => {
-              send(destObjects);
+              send(dest, destObjects);
             }
-          })
+          });
           break;
       }
     }
   }
 
   return transactionResult;
+}
+
+function send(destination, objects) {
+  switch (destination) {
+    case HB_DESTINATION_GPT:
+      gptSend(objects);
+      break;
+    case HB_DESTINATION_PAGE:
+      pageSend(objects);
+      break;
+    case HB_DESTINATION_CALLBACK:
+      callbackSend(objects);
+      break;
+    case HB_DESTINATION_CACHE:
+      cacheSend(objects);
+      break;
+    default:
+      utils.logError('[PPI] Unsupported destination module ', destination);
+  }
 }
 
 /**

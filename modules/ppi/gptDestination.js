@@ -1,5 +1,4 @@
 import { getGlobal } from '../../src/prebidGlobal.js';
-// import * as utils from '../../src/utils.js';
 
 window.googletag = window.googletag || {};
 let googletag = window.googletag;
