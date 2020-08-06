@@ -1,6 +1,7 @@
 
 import { getGlobal } from '../../src/prebidGlobal.js';
 import * as utils from '../../src/utils.js';
+import { send } from './gptDestination.js';
 
 export const HB_SOURCE_AUCTION = 'auction';
 export const HB_SOURCE_CACHE = 'cache';
@@ -49,12 +50,16 @@ export function requestBids(transactionObjects) {
 
       switch (source) {
         case HB_SOURCE_CACHE:
-          // get bids
-          // send to destination module
+          send(destObjects);
           break;
 
         case HB_SOURCE_AUCTION:
-          // hold an auction and send results to destination module
+          getGlobal().requestBids({
+            adUnits: destObjects.map(destObj => destObj.adUnit),
+            bidsBackHandler: (bids) => {
+              send(destObjects);
+            }
+          })
           break;
       }
     }
