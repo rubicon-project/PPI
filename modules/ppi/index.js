@@ -71,6 +71,24 @@ export function requestBids(transactionObjects) {
   return transactionResult;
 }
 
+export function addAdUnitPatterns(aups) {
+  aups.forEach(aup => {
+    try {
+      // clone the aup
+      aup = JSON.parse(JSON.stringify(aup));
+      if (aup.divPattern) {
+        aup.divPattern = new RegExp(aup.divPattern, 'i');
+      }
+      if (aup.slotPattern) {
+        aup.divPattern = new RegExp(aup.slotPattern, 'i');
+      }
+      adUnitPatterns.push(aup);
+    } catch (e) {
+      utils.logError('[PPI] Error creating Ad Unit Pattern ', e)
+    }
+  });
+}
+
 function send(destination, objects) {
   switch (destination) {
     case HB_DESTINATION_GPT:
@@ -138,7 +156,6 @@ function findMatchingAUP(transactionObject, adUnitPatterns) {
         }
 
         // 'transactionObject.name' should be renamed
-        // TODO: create new RegExp() out of regex strings
         return aup.slotPattern.test(transactionObject.name);
       case TransactionType.DIV_PATTERN:
         if (!aup.divPattern) {
@@ -146,7 +163,6 @@ function findMatchingAUP(transactionObject, adUnitPatterns) {
         }
 
         // 'transactionObject.name' should be renamed
-        // TODO: create new RegExp() out of regex strings
         return aup.divPattern.test(transactionObject.name);
       case TransactionType.GPT_SLOT_OBJECT:
         // NOTICE: gptSlotObjects -> gptSlotObject, in this demo we assume single gpt slot object per transaction object
@@ -197,6 +213,7 @@ function createAdUnit(adUnitPattern) {
 const adUnitPatterns = [];
 
 (getGlobal()).ppi = {
-  refreshBids: requestBids,
-  adUnitPatterns: adUnitPatterns,
+  requestBids,
+  addAdUnitPatterns,
+  adUnitPatterns,
 };
