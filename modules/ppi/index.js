@@ -1,4 +1,5 @@
 import * as utils from '../../src/utils.js';
+import { hashFnv32a } from './utils.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
 import { send as gptSend } from './gptDestination.js';
 import { send as pageSend } from './pageDestination.js';
@@ -61,8 +62,10 @@ export function requestBids(transactionObjects) {
 export function addAdUnitPatterns(aups) {
   aups.forEach(aup => {
     try {
+      let aupStr = JSON.stringify(aup);
       // clone the aup
-      aup = JSON.parse(JSON.stringify(aup));
+      aup = JSON.parse(aupStr);
+      aup.id = hashFnv32a(aupStr).toString(16);
       if (aup.divPattern) {
         aup.divPattern = new RegExp(aup.divPattern, 'i');
       }
