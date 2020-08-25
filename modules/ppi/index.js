@@ -93,9 +93,12 @@ function validateTransactionObjects(transactionObjects) {
   let valid = [];
   let invalid = [];
 
+  const validTransactionTypes = new Set(Object.keys(TransactionType).map(t => TransactionType[t]));
+  const validDestinationTypes = new Set(Object.keys(HBDestination).map(h => HBDestination[h].toLowerCase()));
+
   transactionObjects.forEach(to => {
     // check for type
-    if (!TransactionType[to.type]) {
+    if (!validTransactionTypes.has(to.type)) {
       to.error = `provided type ${to.type} not found`;
       invalid.push(to);
       return;
@@ -112,7 +115,7 @@ function validateTransactionObjects(transactionObjects) {
       invalid.push(to);
       return;
     }
-    if (!HBDestination[to.hbDestination.type.toLowerCase()]) {
+    if (!validDestinationTypes.has(to.hbDestination.type.toLowerCase())) {
       to.error = `destination type ${to.hbDestination.type} not supported`
       invalid.push(to);
       return;
@@ -147,7 +150,7 @@ function transformAutoSlots(transactionObjects) {
     let slotObjectTOs = [];
     gptSlots.forEach(gptSlot => {
       let slotObjectTO = {
-        type: TransactionType.SLOT,
+        type: TransactionType.SLOT_OBJECT,
         value: gptSlot,
         hbSource: to.hbSource,
         hbDestination: to.hbDestination,
@@ -226,19 +229,19 @@ function createTransactionResult(transactionObject, adUnitPattern) {
 function findMatchingAUP(transactionObject, adUnitPatterns) {
   return adUnitPatterns.find(aup => {
     switch (transactionObject.type) {
-      case TransactionType.SLOT_PATTERN:
+      case TransactionType.SLOT:
         if (!aup.slotPattern) {
           break;
         }
 
         return aup.slotPattern.test(transactionObject.value);
-      case TransactionType.DIV_PATTERN:
+      case TransactionType.DIV:
         if (!aup.divPattern) {
           break;
         }
 
         return aup.divPattern.test(transactionObject.value);
-      case TransactionType.GPT_SLOT_OBJECT:
+      case TransactionType.SLOT_OBJECT:
         // NOTICE: gptSlotObjects -> gptSlotObject, in this demo we assume single gpt slot object per transaction object
         // we also assume that `transactionObject.value` carries the gpt slot object
         let match = true;

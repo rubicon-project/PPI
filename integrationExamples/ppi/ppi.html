@@ -125,7 +125,7 @@
             window.transactionObjects = [
                 {
                     value: '/19968336/header-bid-tag-0',
-                    type: 'slotPattern',
+                    type: 'slot',
                     hbSource: 'auction',
                     hbDestination: {
                         type: 'gpt',
@@ -134,7 +134,7 @@
                 },
                 {
                     value: 'test-2',
-                    type: 'divPattern',
+                    type: 'div',
                     hbSource: 'auction',
                     hbDestination: {
                         type: 'gpt',
@@ -218,7 +218,7 @@
         window.transactionToCache = [
             {
                 value: '/19968336/header-bid-tag-0',
-                type: 'slotPattern',
+                type: 'slot',
                 hbSource: 'auction',
                 hbDestination: {
                     type: 'cache',
@@ -227,7 +227,7 @@
             },
             {
                 value: 'test-4',
-                type: 'divPattern',
+                type: 'div',
                 hbSource: 'auction',
                 hbDestination: {
                     type: 'cache',
@@ -239,7 +239,7 @@
         window.transactionFromCache = [
             {
                 value: '/19968336/header-bid-tag-0',
-                type: 'slotPattern',
+                type: 'slot',
                 hbSource: 'cache',
                 hbDestination: {
                     type: 'gpt',
@@ -248,7 +248,7 @@
             },
             {
                 value: 'test-4',
-                type: 'divPattern',
+                type: 'div',
                 hbSource: 'cache',
                 hbDestination: {
                     type: 'gpt',
@@ -256,11 +256,22 @@
                 }
             },
         ];
+
+        window.autoSlots = [
+            {
+                type: 'autoSlots',
+                hbSource: 'auction',
+                hbDestination: {
+                    type: 'gpt',
+                }
+            }
+        ];
     </script>
     <button onclick='googletag.destroySlots(window.initialSlots)'>Destroy initial slots</button>
     <button onclick='pbjs.ppi.requestBids(window.transactionToCache)'>Fetch bids for both adunits</button>
     <button onclick='pbjs.ppi.requestBids(window.transactionObjects)'>Refresh
         from cache both adunits in divs 'test-3' and 'test-4'</button>
+        <button onclick='pbjs.ppi.requestBids(window.autoSlots)'>refresh autoslots</button>
 
     <div id="test-1" class="adunit"></div>
     <div id="test-2" class="adunit"></div>

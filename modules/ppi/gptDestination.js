@@ -38,7 +38,7 @@ function getDivIdGPTSlotMapping() {
 
 function getDivId(transactionObject) {
   switch (transactionObject.type) {
-    case TransactionType.GPT_SLOT_OBJECT:
+    case TransactionType.SLOT_OBJECT:
       return transactionObject.value.getSlotElementId();
     default:
       return transactionObject.hbDestination.values.div;
