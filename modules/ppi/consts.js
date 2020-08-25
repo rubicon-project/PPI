@@ -4,14 +4,15 @@ export const HBSource = {
 };
 
 export const HBDestination = {
-  GTP: 'gpt',
+  GPT: 'gpt',
   CACHE: 'cache',
   PAGE: 'page',
   CALLBACK: 'callback'
 };
 
 export const TransactionType = {
-  SLOT_PATTERN: 'slotPattern',
-  DIV_PATTERN: 'divPattern',
-  GPT_SLOT_OBJECT: 'gptSlotObject'
+  SLOT: 'slot',
+  DIV: 'div',
+  SLOT_OBJECT: 'slotObject',
+  AUTO_SLOTS: 'autoSlots',
 };

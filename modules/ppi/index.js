@@ -212,7 +212,7 @@ function createTransactionResult(transactionObject, adUnitPattern) {
   }
 
   return {
-    name: transactionObject.name,
+    name: transactionObject.value,
     type: transactionObject.type,
     hbSource: transactionObject.hbSource,
     hbDestination: transactionObject.hbDestination,
@@ -231,24 +231,22 @@ function findMatchingAUP(transactionObject, adUnitPatterns) {
           break;
         }
 
-        // 'transactionObject.name' should be renamed
-        return aup.slotPattern.test(transactionObject.name);
+        return aup.slotPattern.test(transactionObject.value);
       case TransactionType.DIV_PATTERN:
         if (!aup.divPattern) {
           break;
         }
 
-        // 'transactionObject.name' should be renamed
-        return aup.divPattern.test(transactionObject.name);
+        return aup.divPattern.test(transactionObject.value);
       case TransactionType.GPT_SLOT_OBJECT:
         // NOTICE: gptSlotObjects -> gptSlotObject, in this demo we assume single gpt slot object per transaction object
-        // we also assume that `transactionObject.name` carries the gpt slot object
+        // we also assume that `transactionObject.value` carries the gpt slot object
         let match = true;
         if (aup.slotPattern) {
-          match = aup.slotPattern.test(transactionObject.name.getAdUnitPath());
+          match = aup.slotPattern.test(transactionObject.value.getAdUnitPath());
         }
         if (aup.divPattern) {
-          match = match && aup.divPattern.test(transactionObject.name.getSlotElementId());
+          match = match && aup.divPattern.test(transactionObject.value.getSlotElementId());
         }
 
         // AUP validation should guarantee that AUP has at least one pattern (div or slot)

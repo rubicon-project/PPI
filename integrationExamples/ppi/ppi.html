@@ -122,9 +122,9 @@
     </script>
     <script>
         window.pbjs.que.push(() => {
-            let transactionObjects = [
+            window.transactionObjects = [
                 {
-                    name: '/19968336/header-bid-tag-0',
+                    value: '/19968336/header-bid-tag-0',
                     type: 'slotPattern',
                     hbSource: 'auction',
                     hbDestination: {
@@ -133,7 +133,7 @@
                     }
                 },
                 {
-                    name: 'test-2',
+                    value: 'test-2',
                     type: 'divPattern',
                     hbSource: 'auction',
                     hbDestination: {
@@ -143,7 +143,7 @@
                 },
 
             ];
-            pbjs.ppi.requestBids(transactionObjects);
+            pbjs.ppi.requestBids(window.transactionObjects);
         });
     </script>
 
@@ -217,7 +217,7 @@
     <script>
         window.transactionToCache = [
             {
-                name: '/19968336/header-bid-tag-0',
+                value: '/19968336/header-bid-tag-0',
                 type: 'slotPattern',
                 hbSource: 'auction',
                 hbDestination: {
@@ -226,7 +226,7 @@
                 }
             },
             {
-                name: 'test-4',
+                value: 'test-4',
                 type: 'divPattern',
                 hbSource: 'auction',
                 hbDestination: {
@@ -238,7 +238,7 @@
 
         window.transactionFromCache = [
             {
-                name: '/19968336/header-bid-tag-0',
+                value: '/19968336/header-bid-tag-0',
                 type: 'slotPattern',
                 hbSource: 'cache',
                 hbDestination: {
@@ -247,7 +247,7 @@
                 }
             },
             {
-                name: 'test-4',
+                value: 'test-4',
                 type: 'divPattern',
                 hbSource: 'cache',
                 hbDestination: {
@@ -259,7 +259,7 @@
     </script>
     <button onclick='googletag.destroySlots(window.initialSlots)'>Destroy initial slots</button>
     <button onclick='pbjs.ppi.requestBids(window.transactionToCache)'>Fetch bids for both adunits</button>
-    <button onclick='pbjs.ppi.requestBids(window.transactionFromCache)'>Refresh
+    <button onclick='pbjs.ppi.requestBids(window.transactionObjects)'>Refresh
         from cache both adunits in divs 'test-3' and 'test-4'</button>
 
     <div id="test-1" class="adunit"></div>
