@@ -165,7 +165,7 @@ function transformAutoSlots(transactionObjects) {
   return result;
 }
 
-// sortSizes in place descending, by area, width, height
+// sortSizes in place, descending, by area, width, height
 function sortSizes(sizes) {
   return sizes.sort((a, b) => {
     return b[0] * b[1] - a[0] * a[1] || b[0] - b[0] || a[1] - a[1];
@@ -341,8 +341,11 @@ function createAdUnit(adUnitPattern, limitSizes) {
       let sizes = utils.deepAccess(adUnit, 'mediaTypes.banner.sizes')
       if (sizes && sizes.length) {
         sizes = filterSizesByIntersection(sizes, limitSizes);
-        utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(sizes));
+      } else {
+        sizes = limitSizes;
       }
+
+      utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(sizes));
     }
 
     // it's important that correct (and sorted) sizes enter the hash function
