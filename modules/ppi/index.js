@@ -17,8 +17,17 @@ export function requestBids(transactionObjects) {
   // for each matched adUnit pattern construct adUnits and hold hb auction (if source is not cache) and send result to destination module
   // for each matched adUnit pattern get cached bids and send them to destination module (if source is cache)
 
-  let groupedTransactionObjects = groupTransactionObjects(transactionObjects);
+  let validationResult = validateTransactionObjects(transactionObjects);
   let transactionResult = [];
+  validationResult.invalid.forEach(inv => {
+    utils.logError(`provided invalid transaction object`, inv);
+    transactionResult.push(inv);
+  });
+
+  let allTOs = validationResult.valid.filter(to => { return to.type !== TransactionType.AUTO_SLOTS });
+  allTOs = allTOs.concat(transformAutoSlots(validationResult.valid.filter(to => { return to.type === TransactionType.AUTO_SLOTS })));
+
+  let groupedTransactionObjects = groupTransactionObjects(allTOs);
   for (const source in groupedTransactionObjects) {
     for (const dest in groupedTransactionObjects[source]) {
       let destObjects = []; // TODO: rename
@@ -48,6 +57,7 @@ export function requestBids(transactionObjects) {
           getGlobal().requestBids({
             adUnits: destObjects.map(destObj => destObj.adUnit).filter(a => a),
             bidsBackHandler: (bids) => {
+              utils.logInfo('PPI - bids from bids back handler: ', bids);
               send(dest, destObjects);
             }
           });
@@ -79,9 +89,85 @@ export function addAdUnitPatterns(aups) {
   });
 }
 
+function validateTransactionObjects(transactionObjects) {
+  let valid = [];
+  let invalid = [];
+
+  transactionObjects.forEach(to => {
+    // check for type
+    if (!TransactionType[to.type]) {
+      to.error = `provided type ${to.type} not found`;
+      invalid.push(to);
+      return;
+    }
+    if (to.type !== TransactionType.AUTO_SLOTS) {
+      if (!to.value) {
+        to.error = `for type ${to.type}, value must be provided, it can't be: ${to.value}`;
+        invalid.push(to);
+        return;
+      }
+    }
+    if (!to.hbDestination || !to.hbDestination.type || !to.hbSource) {
+      to.error = 'hbSource and/or hbDestionation not provided';
+      invalid.push(to);
+      return;
+    }
+    if (!HBDestination[to.hbDestination.type.toLowerCase()]) {
+      to.error = `destination type ${to.hbDestination.type} not supported`
+      invalid.push(to);
+      return;
+    }
+
+    valid.push(to);
+  });
+
+  return {
+    valid,
+    invalid,
+  }
+}
+
+function transformAutoSlots(transactionObjects) {
+  if (!transactionObjects || !transactionObjects.length) {
+    return [];
+  }
+  let gptSlots = [];
+  try {
+    gptSlots = window.googletag.pubads().getSlots();
+  } catch (e) {
+    utils.logError('could not get all gpt slots: ', e, ' is gpt initialized?');
+  }
+
+  if (!gptSlots || !gptSlots.length) {
+    return [];
+  }
+
+  let result = [];
+  transactionObjects.forEach(to => {
+    let slotObjectTOs = [];
+    gptSlots.forEach(gptSlot => {
+      let slotObjectTO = {
+        type: TransactionType.SLOT,
+        value: gptSlot,
+        hbSource: to.hbSource,
+        hbDestination: to.hbDestination,
+        sizes: to.sizes,
+        targeting: to.targeting,
+      };
+
+      slotObjectTOs.push(slotObjectTO);
+    });
+
+    utils.logInfo('from autoSlot: ', to, 'created slot objects: ', slotObjectTOs);
+    result = result.concat(slotObjectTOs);
+  });
+
+  return result;
+}
+
 function send(destination, objects) {
   switch (destination) {
-    case HBDestination.GTP:
+    case HBDestination.GPT:
       gptSend(objects);
       break;
     case HBDestination.PAGE:
