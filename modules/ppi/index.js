@@ -194,6 +194,34 @@ function hasValidSize(size, allowedSizes) {
   });
 }
 
+/**
+ * Gets the given gpt slot's sizes in an array formatted [[w,h],...],
+ *      excluding any "Fluid" sizes (which don't have a width or height
+ * @param {googletag.Slot} gptSlot
+ * @returns {Array} - gpt slot sizes array formatted [[w,h],...]
+ */
+function getGptSlotSizes(gptSlot) {
+  var gptSlotSizes = gptSlot.getSizes();
+  // if no sizes array, just return undefined (not sure if this is valid, but being defensive)
+  if (!gptSlotSizes) {
+    return [];
+  }
+
+  // map gpt sizes to [[w,h],...] array (filter out "fluid" size)
+  return gptSlotSizes.filter(function (gptSlotSize) {
+    if (typeof gptSlotSize.getHeight !== 'function' || typeof gptSlotSize.getWidth !== 'function') {
+      utils.logWarn('skipping "fluid" ad size for gpt slot:', gptSlot);
+      return false;
+    }
+    return true;
+  }).map(function (gptSlotSize) {
+    return [
+      gptSlotSize.getWidth(),
+      gptSlotSize.getHeight()
+    ];
+  });
+}
+
 function send(destination, objects) {
   switch (destination) {
     case HBDestination.GPT:
@@ -278,7 +306,7 @@ function findMatchingAUP(transactionObject, adUnitPatterns) {
         }
         // TODO: is this ok?
         if (!transactionObject.sizes) {
-          transactionObject.sizes = transactionObject.value.getSizes(); // TODO: handle "fluid" size, none, or whatever
+          transactionObject.sizes = getGptSlotSizes(transactionObject.value);
         }
 
         // TODO: AUP validation should guarantee that AUP has at least one pattern (div or slot)
