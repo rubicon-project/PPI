@@ -33,13 +33,25 @@ export function requestBids(transactionObjects) {
       let destObjects = []; // TODO: rename
       groupedTransactionObjects[source][dest].forEach((to) => {
         // TODO: what if we get the same AUP for two different transaction objects?
-        let aup = findMatchingAUP(to, adUnitPatterns);
+        let aups = findMatchingAUPs(to, adUnitPatterns);
+        let aup;
         let au;
+        switch (aups.length) {
+          case 0:
+            utils.logWarn('[PPI] No AUP matched for transaction object', to);
+            break;
+          case 1:
+            aup = aups[0];
+            break;
+          default:
+            utils.logWarn('[PPI] More than one AUP matched, for transaction object. Will take the first one', to, aups);
+            aup = aups[0];
+            break;
+        }
+
         if (aup) {
           // create ad unit
           au = createAdUnit(aup, to.sizes);
-        } else {
-          utils.logWarn('[PPI] No AUP matched for transaction object', to);
         }
 
         destObjects.push({
@@ -280,8 +292,8 @@ function createTransactionResult(transactionObject, adUnitPattern) {
   };
 }
 
-function findMatchingAUP(transactionObject, adUnitPatterns) {
-  return adUnitPatterns.find(aup => {
+function findMatchingAUPs(transactionObject, adUnitPatterns) {
+  return adUnitPatterns.filter(aup => {
     let match = false;
     switch (transactionObject.type) {
       case TransactionType.SLOT:
