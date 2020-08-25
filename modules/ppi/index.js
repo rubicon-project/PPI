@@ -37,7 +37,7 @@ export function requestBids(transactionObjects) {
         let au;
         if (aup) {
           // create ad unit
-          au = createAdUnit(aup);
+          au = createAdUnit(aup, to.sizes);
         } else {
           utils.logWarn('[PPI] No AUP matched for transaction object', to);
         }
@@ -72,15 +72,12 @@ export function requestBids(transactionObjects) {
 export function addAdUnitPatterns(aups) {
   aups.forEach(aup => {
     try {
-      let aupStr = JSON.stringify(aup);
-      // clone the aup
-      aup = JSON.parse(aupStr);
-      aup.id = hashFnv32a(aupStr).toString(16);
+      aup = JSON.parse(JSON.stringify(aup));
       if (aup.divPattern) {
-        aup.divPattern = new RegExp(aup.divPattern, 'i');
+        aup.divPatternRegex = new RegExp(aup.divPattern, 'i');
       }
       if (aup.slotPattern) {
-        aup.slotPattern = new RegExp(aup.slotPattern, 'i');
+        aup.slotPatternRegex = new RegExp(aup.slotPattern, 'i');
       }
       adUnitPatterns.push(aup);
     } catch (e) {
@@ -168,6 +165,35 @@ function transformAutoSlots(transactionObjects) {
   return result;
 }
 
+// sortSizes in place descending, by area, width, height
+function sortSizes(sizes) {
+  return sizes.sort((a, b) => {
+    return b[0] * b[1] - a[0] * a[1] || b[0] - b[0] || a[1] - a[1];
+  });
+}
+
+/**
+ * @param {Array.<Array>} currentSizes
+ * @param {Array.<Array>} allowedSizes
+ * @returns {Array.<Array>}
+ */
+function filterSizesByIntersection(currentSizes, allowedSizes) {
+  return currentSizes.filter(function (size) {
+    return hasValidSize(size, allowedSizes);
+  });
+}
+
+/**
+ * @param {Array.<Array>} size
+ * @param {Array.<Array>} allowedSizes
+ * @returns {boolean}
+ */
+function hasValidSize(size, allowedSizes) {
+  return allowedSizes.some(function (allowedSize) {
+    return (size[0] === allowedSize[0] && size[1] === allowedSize[1]);
+  });
+}
+
 function send(destination, objects) {
   switch (destination) {
     case HBDestination.GPT:
@@ -209,8 +235,8 @@ function createTransactionResult(transactionObject, adUnitPattern) {
   let aup;
   if (adUnitPattern) {
     aup = {
-      divPattern: adUnitPattern.divPattern.toString(),
-      slotPattern: adUnitPattern.slotPattern.toString(),
+      divPattern: adUnitPattern.divPattern,
+      slotPattern: adUnitPattern.slotPattern,
     };
   }
 
@@ -228,53 +254,77 @@ function createTransactionResult(transactionObject, adUnitPattern) {
 
 function findMatchingAUP(transactionObject, adUnitPatterns) {
   return adUnitPatterns.find(aup => {
+    let match = false;
     switch (transactionObject.type) {
       case TransactionType.SLOT:
-        if (!aup.slotPattern) {
-          break;
-        }
-
-        return aup.slotPattern.test(transactionObject.value);
-      case TransactionType.DIV:
-        if (!aup.divPattern) {
-          break;
-        }
-
-        return aup.divPattern.test(transactionObject.value);
-      case TransactionType.SLOT_OBJECT:
-        // NOTICE: gptSlotObjects -> gptSlotObject, in this demo we assume single gpt slot object per transaction object
-        // we also assume that `transactionObject.value` carries the gpt slot object
-        let match = true;
         if (aup.slotPattern) {
-          match = aup.slotPattern.test(transactionObject.value.getAdUnitPath());
+          match = aup.slotPatternRegex.test(transactionObject.value);
+        }
+
+        break;
+      case TransactionType.DIV:
+        if (aup.divPattern) {
+          match = aup.divPatternRegex.test(transactionObject.value);
+        }
+
+        break;
+      case TransactionType.SLOT_OBJECT:
+        match = true;
+        if (aup.slotPattern) {
+          match = aup.slotPatternRegex.test(transactionObject.value.getAdUnitPath());
         }
         if (aup.divPattern) {
-          match = match && aup.divPattern.test(transactionObject.value.getSlotElementId());
+          match = match && aup.divPatternRegex.test(transactionObject.value.getSlotElementId());
+        }
+        // TODO: is this ok?
+        if (!transactionObject.sizes) {
+          transactionObject.sizes = transactionObject.value.getSizes(); // TODO: handle "fluid" size, none, or whatever
         }
 
-        // AUP validation should guarantee that AUP has at least one pattern (div or slot)
-        return match;
+        // TODO: AUP validation should guarantee that AUP has at least one pattern (div or slot)
+        break;
       default:
-        // this should never happen
-        // if transaction object passed validation
+        // this should never happen, if transaction object passed validation
         utils.logError('[PPI] Invalid transaction object type', transactionObject.type)
+        return false;
     }
 
-    return false;
+    if (!match) {
+      return false;
+    }
+
+    let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
+    if (!transactionObject.sizes || !transactionObject.sizes.length || !aupSizes || !aupSizes.length) {
+      return true;
+    }
+
+    let matchingSizes = filterSizesByIntersection(aupSizes, transactionObject.sizes);
+    return matchingSizes.length;
   });
 }
 
-function createAdUnit(adUnitPattern) {
+function createAdUnit(adUnitPattern, limitSizes) {
   let adUnit;
   try {
     // copy pattern for conversion into adUnit
     adUnit = JSON.parse(JSON.stringify(adUnitPattern));
-    adUnit.code = adUnitPattern.id;
+
+    if (limitSizes && limitSizes.length) {
+      let sizes = utils.deepAccess(adUnit, 'mediaTypes.banner.sizes')
+      if (sizes && sizes.length) {
+        sizes = filterSizesByIntersection(sizes, limitSizes);
+        utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(sizes));
+      }
+    }
+
+    // it's important that correct (and sorted) sizes enter the hash function
+    adUnit.code = hashFnv32a(JSON.stringify(adUnit)).toString(16);
 
     // Remove pattern properties not included in adUnit
-    delete adUnit.id;
     delete adUnit.slotPattern;
     delete adUnit.divPattern;
+    delete adUnit.slotPatternRegex;
+    delete adUnit.divPatternRegex;
 
     // attach transactionId
     if (!adUnit.transactionId) {
