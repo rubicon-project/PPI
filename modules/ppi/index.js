@@ -55,11 +55,12 @@ export function requestBids(transactionObjects) {
           applyFirstPartyData(au, aup, to);
         }
 
+        let tr = createTransactionResult(to, aup);
         destObjects.push({
           adUnit: au,
-          transactionObject: to,
+          transactionObject: tr,
         });
-        transactionResult.push(createTransactionResult(to, aup));
+        transactionResult.push(tr);
       });
 
       switch (source) {
@@ -350,25 +351,14 @@ export function groupTransactionObjects(transactionObjects) {
   return grouped;
 }
 
-function createTransactionResult(transactionObject, adUnitPattern) {
-  let aup;
-  if (adUnitPattern) {
-    aup = {
-      divPattern: adUnitPattern.divPattern,
-      slotPattern: adUnitPattern.slotPattern,
-    };
+function createTransactionResult(transactionObject, aup) {
+  let transactionResult = utils.deepClone(transactionObject);
+  transactionResult.match = {
+    status: !!aup,
+    aup: aup && utils.deepClone(aup),
   }
 
-  return {
-    name: transactionObject.value,
-    type: transactionObject.type,
-    hbSource: transactionObject.hbSource,
-    hbDestination: transactionObject.hbDestination,
-    match: {
-      status: !!aup,
-      aup: aup
-    }
-  };
+  return transactionResult;
 }
 
 function findMatchingAUPs(transactionObject, adUnitPatterns) {
