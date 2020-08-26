@@ -20,7 +20,7 @@ export function requestBids(transactionObjects) {
   let validationResult = validateTransactionObjects(transactionObjects);
   let transactionResult = [];
   validationResult.invalid.forEach(inv => {
-    utils.logError(`provided invalid transaction object`, inv);
+    utils.logError(`[PPI] provided invalid transaction object`, inv);
     transactionResult.push(inv);
   });
 
@@ -52,6 +52,7 @@ export function requestBids(transactionObjects) {
         if (aup) {
           // create ad unit
           au = createAdUnit(aup, to.sizes);
+          applyFirstPartyData(au, aup, to);
         }
 
         destObjects.push({
@@ -69,7 +70,7 @@ export function requestBids(transactionObjects) {
           getGlobal().requestBids({
             adUnits: destObjects.map(destObj => destObj.adUnit).filter(a => a),
             bidsBackHandler: (bids) => {
-              utils.logInfo('PPI - bids from bids back handler: ', bids);
+              utils.logInfo('[PPI] - bids from bids back handler: ', bids);
               send(dest, destObjects);
             }
           });
@@ -88,7 +89,7 @@ function getGPTSlotName(transactionObject, adUnitPattern) {
     case TransactionType.DIV:
       // TODO: check if .*^$ are valid regex markers
       let isRegex = ['.', '*', '^', '$'].some(p => adUnitPattern.slotPattern.indexOf(p) !== -1);
-      return isRegex ? '', adUnitPattern.slotPattern
+      return isRegex ? '' : adUnitPattern.slotPattern
     case TransactionType.SLOT_OBJECT:
       return transactionObject.value.getAdUnitPath();
   }
@@ -221,7 +222,7 @@ function transformAutoSlots(transactionObjects) {
   try {
     gptSlots = window.googletag.pubads().getSlots();
   } catch (e) {
-    utils.logError('could not get all gpt slots: ', e, ' is gpt initialized?');
+    utils.logError('[PPI] - could not get all gpt slots: ', e, ' is gpt initialized?');
   }
 
   if (!gptSlots || !gptSlots.length) {
@@ -244,7 +245,7 @@ function transformAutoSlots(transactionObjects) {
       slotObjectTOs.push(slotObjectTO);
     });
 
-    utils.logInfo('from autoSlot: ', to, 'created slot objects: ', slotObjectTOs);
+    utils.logInfo('[PPI] - from autoSlot: ', to, 'created slot objects: ', slotObjectTOs);
     result = result.concat(slotObjectTOs);
   });
 
@@ -300,7 +301,7 @@ function getGptSlotSizes(gptSlot) {
   // map gpt sizes to [[w,h],...] array (filter out "fluid" size)
   return gptSlotSizes.filter(function (gptSlotSize) {
     if (typeof gptSlotSize.getHeight !== 'function' || typeof gptSlotSize.getWidth !== 'function') {
-      utils.logWarn('skipping "fluid" ad size for gpt slot:', gptSlot);
+      utils.logWarn('[PPI] - skipping "fluid" ad size for gpt slot:', gptSlot);
       return false;
     }
     return true;
@@ -454,6 +455,44 @@ function createAdUnit(adUnitPattern, limitSizes) {
   }
 
   return adUnit;
+}
+
+function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
+  let targeting = transactionObject.targeting || {};
+
+  adUnit.bids.forEach(bid => {
+    if (!bid.params) {
+      return;
+    }
+
+    for (const key in targeting) {
+      let aupParam = bid.params[key];
+
+      if ('##data.' + key + '##' === aupParam) {
+        utils.logInfo(`[PPI] - found placeholder: ${aupParam}, replacing it with value from targeting: `, targeting[key]);
+        bid.params[key] = targeting[key];
+      }
+    }
+
+    for (const key in bid.params) {
+      const value = bid.params[key];
+      if (utils.isStr(value) && value.indexOf('##data.') === 0) {
+        utils.logInfo(`[PPI] - didn't find targeting value to replace ${value}, will remove it from bid params`);
+        delete bid.params[key];
+      }
+    }
+  });
+
+  let slotName = getGPTSlotName(transactionObject, adUnitPattern);
+  if (!slotName) {
+    return;
+  }
+
+  utils.deepSetValue(adUnit, 'fpd.context.pbAdSlot', slotName);
+  utils.deepSetValue(adUnit, 'fpd.context.adServer', {
+    name: 'gam',
+    adSlot: slotName
+  });
 }
 
 const adUnitPatterns = [];
