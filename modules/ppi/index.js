@@ -85,17 +85,53 @@ export function addAdUnitPatterns(aups) {
   aups.forEach(aup => {
     try {
       aup = JSON.parse(JSON.stringify(aup));
+      aup = validateAUP(aup);
+      if (aup.error) {
+        throw aup.error;
+      }
       if (aup.divPattern) {
         aup.divPatternRegex = new RegExp(aup.divPattern, 'i');
       }
       if (aup.slotPattern) {
         aup.slotPatternRegex = new RegExp(aup.slotPattern, 'i');
       }
+      if (!aup.divPattern && !aup.slotPattern) {
+        throw `can't create AUP without slot pattern or div pattern`;
+      }
       adUnitPatterns.push(aup);
     } catch (e) {
       utils.logError('[PPI] Error creating Ad Unit Pattern ', e)
     }
   });
+}
+
+function validateAUP(aup) {
+  let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
+  // validate sizes
+  if (aupSizes) {
+    if (!Array.isArray(aupSizes)) {
+      aup.error = 'sizes should be an array';
+      return aup;
+    }
+
+    // to cover the usual error where [[300, 250]] --> [300, 250]
+    if (Array.isArray(aupSizes) && typeof (aupSizes[0]) === 'number') {
+      aupSizes = [aupSizes];
+    }
+
+    aupSizes = aupSizes.filter(s => {
+      if (!isSizeValid(s)) {
+        utils.logError('[PPI] Invalid AUP size', s);
+        return false;
+      }
+
+      return true;
+    });
+
+    utils.deepSetValue(aup, 'mediaTypes.banner.sizes', aupSizes);
+  }
+
+  return aup;
 }
 
 function validateTransactionObjects(transactionObjects) {
@@ -347,8 +383,6 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
         if (!transactionObject.sizes) {
           transactionObject.sizes = getGptSlotSizes(transactionObject.value);
         }
-
-        // TODO: AUP validation should guarantee that AUP has at least one pattern (div or slot)
         break;
       default:
         // this should never happen, if transaction object passed validation
