@@ -81,6 +81,21 @@ export function requestBids(transactionObjects) {
   return transactionResult;
 }
 
+function getGPTSlotName(transactionObject, adUnitPattern) {
+  switch (transactionObject.type) {
+    case TransactionType.SLOT:
+      return transactionObject.value;
+    case TransactionType.DIV:
+      // TODO: check if .*^$ are valid regex markers
+      let isRegex = ['.', '*', '^', '$'].some(p => adUnitPattern.slotPattern.indexOf(p) !== -1);
+      return isRegex ? '', adUnitPattern.slotPattern
+    case TransactionType.SLOT_OBJECT:
+      return transactionObject.value.getAdUnitPath();
+  }
+
+  return '';
+}
+
 export function addAdUnitPatterns(aups) {
   aups.forEach(aup => {
     try {
