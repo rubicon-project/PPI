@@ -90,7 +90,7 @@ function getGPTSlotName(transactionObject, adUnitPattern) {
     case TransactionType.DIV:
       // TODO: check if .*^$ are valid regex markers
       let isRegex = ['.', '*', '^', '$'].some(p => adUnitPattern.slotPattern.indexOf(p) !== -1);
-      return isRegex ? '' : adUnitPattern.slotPattern
+      return isRegex ? '' : adUnitPattern.slotPattern;
     case TransactionType.SLOT_OBJECT:
       return transactionObject.value.getAdUnitPath();
   }

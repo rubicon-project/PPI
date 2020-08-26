@@ -19,15 +19,15 @@ export function send(destinationObjects) {
         return;
       }
 
-      let slotId = getSlotId(destObj.transactionObject);
+      let slotId = getSlotId(destObj.transactionObject, divIdSlotMapping);
       if (!slotId) {
         utils.logError('[PPI] GPT Destination Module: unable to find slot id for transaction object: ', destObj.transactionObject);
         return;
       }
 
       let adUnitSizes = [];
-      if (destObj.transactionObject.adUnit) {
-        adUnitSizes = utils.deepAccess(destObj.transactionObject.adUnit, 'mediaTypes.banner.sizes');
+      if (destObj.adUnit) {
+        adUnitSizes = utils.deepAccess(destObj.adUnit, 'mediaTypes.banner.sizes');
       }
 
       // existing gpt slot
@@ -93,7 +93,7 @@ function getDivId(transactionObject) {
   return isRegex ? '' : div;
 }
 
-function getSlotId(transactionObject) {
+function getSlotId(transactionObject, divIdSlotMapping) {
   switch (transactionObject.type) {
     case TransactionType.SLOT:
       return transactionObject.value;
@@ -101,13 +101,16 @@ function getSlotId(transactionObject) {
       return transactionObject.value.getAdUnitPath();
     case TransactionType.DIV:
       let aup = transactionObject.match.status && transactionObject.match.aup;
-      if (!aup) {
-        return '';
+      if (aup && aup.slotPattern) {
+        // TODO: check if .*^$ are valid regex markers
+        let isRegex = ['.', '*', '^', '$'].some(p => aup.slotPattern.indexOf(p) !== -1);
+        if (!isRegex) {
+          return aup.slotPattern;
+        }
       }
 
-      // TODO: check if .*^$ are valid regex markers
-      let isRegex = ['.', '*', '^', '$'].some(p => aup.slotPattern.indexOf(p) !== -1);
-      return isRegex ? '' : aup.slotPattern;
+      let existingSlot = divIdSlotMapping[transactionObject.value];
+      return existingSlot ? existingSlot.getAdUnitPath() : '';
   }
 
   return '';
