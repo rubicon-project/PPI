@@ -34,8 +34,13 @@ export function send(destinationObjects) {
       let gptSlot = divIdSlotMapping[divId];
       if (!gptSlot) {
         gptSlot = createGPTSlot(slotId, adUnitSizes, divId);
-      } else {
+      } else if (destObj.transactionObject.match.status) {
         validateExistingSlot(gptSlot, slotId, adUnitSizes, divId);
+      }
+
+      // create gpt slot failed
+      if (!gptSlot) {
+        return;
       }
 
       gptSlotsToRefresh.push(gptSlot);
