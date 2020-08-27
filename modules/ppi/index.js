@@ -293,20 +293,20 @@ function hasValidSize(size, allowedSizes) {
  * @returns {Array} - gpt slot sizes array formatted [[w,h],...]
  */
 function getGptSlotSizes(gptSlot) {
-  var gptSlotSizes = gptSlot.getSizes();
+  let gptSlotSizes = gptSlot.getSizes();
   // if no sizes array, just return undefined (not sure if this is valid, but being defensive)
   if (!gptSlotSizes) {
     return [];
   }
 
   // map gpt sizes to [[w,h],...] array (filter out "fluid" size)
-  return gptSlotSizes.filter(function (gptSlotSize) {
+  return gptSlotSizes.filter((gptSlotSize) => {
     if (typeof gptSlotSize.getHeight !== 'function' || typeof gptSlotSize.getWidth !== 'function') {
       utils.logWarn('[PPI] - skipping "fluid" ad size for gpt slot:', gptSlot);
       return false;
     }
     return true;
-  }).map(function (gptSlotSize) {
+  }).map((gptSlotSize) => {
     return [
       gptSlotSize.getWidth(),
       gptSlotSize.getHeight()
@@ -427,8 +427,11 @@ function createAdUnit(adUnitPattern, limitSizes) {
       utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(sizes));
     }
 
-    // it's important that correct (and sorted) sizes enter the hash function
-    adUnit.code = hashFnv32a(JSON.stringify(adUnit)).toString(16);
+    // if aup code was not published, generate one
+    if (!adUnit.code) {
+      // it's important that correct (and sorted) sizes enter the hash function
+      adUnit.code = hashFnv32a(JSON.stringify(adUnit)).toString(16);
+    }
 
     // Remove pattern properties not included in adUnit
     delete adUnit.slotPattern;

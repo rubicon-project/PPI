@@ -34,15 +34,9 @@ export function send(destinationObjects) {
       let gptSlot = divIdSlotMapping[divId];
       if (!gptSlot) {
         gptSlot = createGPTSlot(slotId, adUnitSizes, divId);
+      } else {
+        validateExistingSlot(gptSlot, slotId, adUnitSizes, divId);
       }
-
-      // TODO:
-      // else {
-      //   // check if sizes match
-      //   // check if slotId's match
-      //   // if they do, reuse the slot
-      //   // if they don't, destroy the existing slot and create a new one with adUnit.....sizes
-      // }
 
       gptSlotsToRefresh.push(gptSlot);
       if (!destObj.adUnit) {
@@ -59,10 +53,46 @@ export function send(destinationObjects) {
 }
 
 function createGPTSlot(slotId, sizes, divId) {
-  // TODO: wrap with try catch
-  let slot = googletag.defineSlot(slotId, sizes, divId).addService(googletag.pubads());
-  googletag.display(slot);
+  let slot;
+  try {
+    slot = googletag.defineSlot(slotId, sizes, divId);
+    slot.addService(googletag.pubads());
+    googletag.display(slot);
+  } catch (e) {
+    utils.logError('[PPI] while creating GTP slot:', e);
+  }
+
   return slot;
+}
+
+function validateExistingSlot(gptSlot, slotId, adUnitSizes, divId) {
+  if (gptSlot.getAdUnitPath() !== slotId) {
+    utils.logError(`[PPI] target div '${divId}' contains slot with ad unit path '${gptSlot.getAdUnitPath()}', expected ${slotId}`);
+  }
+
+  let gptSlotSizes = gptSlot.getSizes();
+  gptSlotSizes = gptSlotSizes.filter(gptSlotSize => typeof gptSlotSize.getHeight === 'function' && typeof gptSlotSize.getWidth === 'function')
+    .map(gptSlotSize => `${gptSlotSize.getWidth()}x${gptSlotSize.getHeight()}`);
+
+  adUnitSizes = adUnitSizes.map(size => `${size[0]}x${size[1]}`)
+
+  let difference = (listA, listB) => {
+    let diff = new Set(listA)
+    for (let elem of listB) {
+      diff.delete(elem)
+    }
+    return diff
+  }
+
+  let extraGPTSizes = difference(gptSlotSizes, adUnitSizes);
+  let extraAdUnitSizes = difference(adUnitSizes, gptSlotSizes);
+
+  extraGPTSizes = Array.from(extraGPTSizes).join(' ');
+  extraAdUnitSizes = Array.from(extraAdUnitSizes).join(' ');
+
+  if (extraGPTSizes || extraAdUnitSizes) {
+    utils.logError(`[PPI] target div '${divId}' contains slot with incompatible sizes, extra GPT sizes: ${extraGPTSizes}, extra Ad Unit sizes: ${extraAdUnitSizes}`);
+  }
 }
 
 function getDivIdGPTSlotMapping() {
