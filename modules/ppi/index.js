@@ -481,10 +481,10 @@ function replaceBidParameters(params, paramName, targeting) {
   if (utils.isStr(paramValue) && isPlaceHolder(paramValue)) {
     let placeholderKey = paramValue.slice(7, -2);
     if (targeting[placeholderKey]) {
-      utils.logInfo(`[PPI] - found placeholder: ${placeholderKey}, replacing it with value from targeting: `, targeting[placeholderKey]);
+      utils.logInfo(`[PPI] - found placeholder: '${paramValue}' with name '${placeholderKey}', replacing it with value from targeting: `, targeting[placeholderKey]);
       params[paramName] = targeting[placeholderKey];
     } else {
-      utils.logInfo(`[PPI] - didn't find targeting value to replace ${placeholderKey}, will remove ${paramName} from bid params`);
+      utils.logInfo(`[PPI] - for placeholder '${paramValue}' with name '${placeholderKey}', didn't find targeting value, will remove '${paramName}' from bid params`);
       delete params[paramName];
     }
   }
