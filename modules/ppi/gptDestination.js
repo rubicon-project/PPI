@@ -110,7 +110,7 @@ function getDivIdGPTSlotMapping() {
 }
 
 function getDivId(transactionObject) {
-  if (transactionObject.hbDestination.values.div) {
+  if (transactionObject.hbDestination.values && transactionObject.hbDestination.values.div) {
     return transactionObject.hbDestination.values.div;
   }
 

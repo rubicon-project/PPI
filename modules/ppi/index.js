@@ -31,9 +31,16 @@ export function requestBids(transactionObjects) {
   for (const source in groupedTransactionObjects) {
     for (const dest in groupedTransactionObjects[source]) {
       let destObjects = []; // TODO: rename
+      let lock = new Set();
       groupedTransactionObjects[source][dest].forEach((to) => {
-        // TODO: what if we get the same AUP for two different transaction objects?
-        let aups = findMatchingAUPs(to, adUnitPatterns);
+        let aups = findMatchingAUPs(to, adUnitPatterns).filter(a => {
+          let isLocked = lock.has(a)
+          if (isLocked) {
+            utils.logWarn('[PPI] aup was already matched for one of the previous transaction object, will skip it. AUP: ', a);
+          }
+          return !isLocked;
+        });
+
         let aup;
         let au;
         switch (aups.length) {
@@ -42,10 +49,12 @@ export function requestBids(transactionObjects) {
             break;
           case 1:
             aup = aups[0];
+            lock.add(aup);
             break;
           default:
             utils.logWarn('[PPI] More than one AUP matched, for transaction object. Will take the first one', to, aups);
             aup = aups[0];
+            lock.add(aup);
             break;
         }
 
