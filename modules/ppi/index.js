@@ -454,22 +454,8 @@ function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
     if (!bid.params) {
       return;
     }
-
-    for (const key in targeting) {
-      let aupParam = bid.params[key];
-
-      if ('##data.' + key + '##' === aupParam) {
-        utils.logInfo(`[PPI] - found placeholder: ${aupParam}, replacing it with value from targeting: `, targeting[key]);
-        bid.params[key] = targeting[key];
-      }
-    }
-
-    for (const key in bid.params) {
-      const value = bid.params[key];
-      if (utils.isStr(value) && value.indexOf('##data.') === 0) {
-        utils.logInfo(`[PPI] - didn't find targeting value to replace ${value}, will remove it from bid params`);
-        delete bid.params[key];
-      }
+    for (const paramName in bid.params) {
+      replaceBidParameters(bid.params, paramName, targeting);
     }
   });
 
@@ -483,6 +469,29 @@ function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
     name: 'gam',
     adSlot: slotName
   });
+}
+
+function replaceBidParameters(params, paramName, targeting) {
+  let paramValue = params[paramName];
+  if (utils.isPlainObject(paramValue)) {
+    for (const nestedKey in paramValue) {
+      replaceBidParameters(paramValue, nestedKey, targeting);
+    }
+  }
+  if (utils.isStr(paramValue) && isPlaceHolder(paramValue)) {
+    let placeholderKey = paramValue.slice(7, -2);
+    if (targeting[placeholderKey]) {
+      utils.logInfo(`[PPI] - found placeholder: ${placeholderKey}, replacing it with value from targeting: `, targeting[placeholderKey]);
+      params[paramName] = targeting[placeholderKey];
+    } else {
+      utils.logInfo(`[PPI] - didn't find targeting value to replace ${placeholderKey}, will remove ${paramName} from bid params`);
+      delete params[paramName];
+    }
+  }
+}
+
+function isPlaceHolder(value) {
+  return value.indexOf('##data.') === 0 && value.slice(-2) == '##';
 }
 
 const adUnitPatterns = [];
