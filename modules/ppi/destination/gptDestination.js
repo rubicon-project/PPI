@@ -1,6 +1,6 @@
-import { getGlobal } from '../../src/prebidGlobal.js';
-import { TransactionType } from './consts.js';
-import * as utils from '../../src/utils.js';
+import { getGlobal } from '../../../src/prebidGlobal.js';
+import { TransactionType } from './../consts.js';
+import * as utils from '../../../src/utils.js';
 
 window.googletag = window.googletag || {};
 let googletag = window.googletag;

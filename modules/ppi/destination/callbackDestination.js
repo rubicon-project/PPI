@@ -1,5 +1,5 @@
-import { getGlobal } from '../../src/prebidGlobal.js';
-import * as utils from '../../src/utils.js';
+import { getGlobal } from '../../../src/prebidGlobal.js';
+import * as utils from '../../../src/utils.js';
 
 export function send(destinationObjects) {
   let pbjs = getGlobal();

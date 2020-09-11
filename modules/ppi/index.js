@@ -1,11 +1,8 @@
 import * as utils from '../../src/utils.js';
 import { hashFnv32a } from './utils.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
-import { send as gptSend } from './gptDestination.js';
-import { send as pageSend } from './pageDestination.js';
-import { send as callbackSend } from './callbackDestination.js';
-import { send as cacheSend } from './cacheDestination.js';
 import { TransactionType, HBSource, HBDestination } from './consts.js';
+import { send } from './destination/destination.js';
 
 /**
  * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
@@ -31,35 +28,12 @@ export function requestBids(transactionObjects) {
   for (const source in groupedTransactionObjects) {
     for (const dest in groupedTransactionObjects[source]) {
       let destObjects = []; // TODO: rename
-      let lock = new Set();
-      groupedTransactionObjects[source][dest].forEach((to) => {
-        let aups = findMatchingAUPs(to, adUnitPatterns).filter(a => {
-          let isLocked = lock.has(a)
-          if (isLocked) {
-            utils.logWarn('[PPI] aup was already matched for one of the previous transaction object, will skip it. AUP: ', a);
-          }
-          return !isLocked;
-        });
-
-        let aup;
+      let toAUPPair = getTOAUPPair(groupedTransactionObjects[source][dest], adUnitPatterns);
+      toAUPPair.forEach(toAUP => {
+        let aup = toAUP.adUnitPattern;
+        let to = toAUP.transactionObject;
         let au;
-        switch (aups.length) {
-          case 0:
-            utils.logWarn('[PPI] No AUP matched for transaction object', to);
-            break;
-          case 1:
-            aup = aups[0];
-            lock.add(aup);
-            break;
-          default:
-            utils.logWarn('[PPI] More than one AUP matched, for transaction object. Will take the first one', to, aups);
-            aup = aups[0];
-            lock.add(aup);
-            break;
-        }
-
         if (aup) {
-          // create ad unit
           au = createAdUnit(aup, to.sizes);
           applyFirstPartyData(au, aup, to);
         }
@@ -78,7 +52,7 @@ export function requestBids(transactionObjects) {
           break;
         case HBSource.AUCTION:
           getGlobal().requestBids({
-            adUnits: destObjects.map(destObj => destObj.adUnit).filter(a => a),
+            adUnits: destObjects.filter(d => d.adUnit).map(destObj => destObj.adUnit),
             bidsBackHandler: (bids) => {
               utils.logInfo('[PPI] - bids from bids back handler: ', bids);
               send(dest, destObjects);
@@ -121,9 +95,6 @@ export function addAdUnitPatterns(aups) {
       if (aup.slotPattern) {
         aup.slotPatternRegex = new RegExp(aup.slotPattern, 'i');
       }
-      if (!aup.divPattern && !aup.slotPattern) {
-        throw `can't create AUP without slot pattern or div pattern`;
-      }
       adUnitPatterns.push(aup);
     } catch (e) {
       utils.logError('[PPI] Error creating Ad Unit Pattern ', e)
@@ -132,6 +103,10 @@ export function addAdUnitPatterns(aups) {
 }
 
 function validateAUP(aup) {
+  if (!aup.divPattern && !aup.slotPattern) {
+    aup.error = `can't create AUP without slot pattern or div pattern`;
+    return aup;
+  }
   let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
   // validate sizes
   if (aupSizes) {
@@ -160,7 +135,7 @@ function validateAUP(aup) {
   return aup;
 }
 
-function validateTransactionObjects(transactionObjects) {
+export function validateTransactionObjects(transactionObjects) {
   let valid = [];
   let invalid = [];
 
@@ -181,13 +156,24 @@ function validateTransactionObjects(transactionObjects) {
         return;
       }
     }
-    if (!to.hbDestination || !to.hbDestination.type || !to.hbSource) {
-      to.error = 'hbSource and/or hbDestionation not provided';
+    if (to.hbSource !== HBSource.AUCTION && to.hbSource !== HBSource.CACHE) {
+      to.error = `hbSource: ${to.hbSource} is not equal to ${HBSource.AUCTION} or ${HBSource.CACHE}`;
+      invalid.push(to);
+      return;
+    }
+    if (!to.hbDestination || !to.hbDestination.type) {
+      to.error = 'hbDestionation.type not provided';
       invalid.push(to);
       return;
     }
     if (!validDestinationTypes.has(to.hbDestination.type.toLowerCase())) {
       to.error = `destination type ${to.hbDestination.type} not supported`
+      invalid.push(to);
+      return;
+    }
+
+    if (to.hbDestination.type === HBDestination.CACHE && to.hbSource === HBSource.CACHE) {
+      to.error = `destination and source can't be cache at the same time`;
       invalid.push(to);
       return;
     }
@@ -224,7 +210,7 @@ function validateTransactionObjects(transactionObjects) {
   }
 }
 
-function transformAutoSlots(transactionObjects) {
+export function transformAutoSlots(transactionObjects) {
   if (!transactionObjects || !transactionObjects.length) {
     return [];
   }
@@ -323,25 +309,6 @@ function getGptSlotSizes(gptSlot) {
   });
 }
 
-function send(destination, objects) {
-  switch (destination) {
-    case HBDestination.GPT:
-      gptSend(objects);
-      break;
-    case HBDestination.PAGE:
-      pageSend(objects);
-      break;
-    case HBDestination.CALLBACK:
-      callbackSend(objects);
-      break;
-    case HBDestination.CACHE:
-      cacheSend(objects);
-      break;
-    default:
-      utils.logError('[PPI] Unsupported destination module ', destination);
-  }
-}
-
 /**
  * group transaction objects
  * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
@@ -368,6 +335,42 @@ function createTransactionResult(transactionObject, aup) {
   }
 
   return transactionResult;
+}
+
+export function getTOAUPPair(transactionObjects, adUnitPatterns) {
+  let result = [];
+  let lock = new Set();
+  transactionObjects.forEach(to => {
+    let aups = findMatchingAUPs(to, adUnitPatterns).filter(a => {
+      let isLocked = lock.has(a)
+      if (isLocked) {
+        utils.logWarn('[PPI] aup was already matched for one of the previous transaction object, will skip it. AUP: ', a);
+      }
+      return !isLocked;
+    });
+
+    let aup;
+    switch (aups.length) {
+      case 0:
+        utils.logWarn('[PPI] No AUP matched for transaction object', to);
+        break;
+      case 1:
+        aup = aups[0];
+        lock.add(aup);
+        break;
+      default:
+        utils.logWarn('[PPI] More than one AUP matched, for transaction object. Will take the first one', to, aups);
+        aup = aups[0];
+        lock.add(aup);
+        break;
+    }
+    result.push({
+      transactionObject: to,
+      adUnitPattern: aup,
+    });
+  });
+
+  return result;
 }
 
 function findMatchingAUPs(transactionObject, adUnitPatterns) {
@@ -419,7 +422,7 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
   });
 }
 
-function createAdUnit(adUnitPattern, limitSizes) {
+export function createAdUnit(adUnitPattern, limitSizes) {
   let adUnit;
   try {
     // copy pattern for conversion into adUnit
@@ -459,7 +462,7 @@ function createAdUnit(adUnitPattern, limitSizes) {
   return adUnit;
 }
 
-function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
+export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
   let targeting = transactionObject.targeting || {};
 
   adUnit.bids.forEach(bid => {
@@ -489,6 +492,11 @@ function replaceBidParameters(params, paramName, targeting) {
     for (const nestedKey in paramValue) {
       replaceBidParameters(paramValue, nestedKey, targeting);
     }
+  } else if (Array.isArray(paramValue)) {
+    for (let i = 0; i < paramValue.length; i++) {
+      replaceBidParameters(paramValue, i, targeting);
+    }
+    params[paramName] = paramValue.filter(p => p !== undefined);
   }
   if (utils.isStr(paramValue) && isPlaceHolder(paramValue)) {
     let placeholderKey = paramValue.slice(7, -2);
@@ -506,7 +514,7 @@ function isPlaceHolder(value) {
   return value.indexOf('##data.') === 0 && value.slice(-2) == '##';
 }
 
-const adUnitPatterns = [];
+export const adUnitPatterns = [];
 
 (getGlobal()).ppi = {
   requestBids,

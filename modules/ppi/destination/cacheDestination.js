@@ -1,4 +1,4 @@
-import * as utils from '../../src/utils.js';
+import * as utils from '../../../src/utils.js';
 
 export function send(destinationObjects) {
   destinationObjects.forEach(destObj => {
