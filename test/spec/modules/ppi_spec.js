@@ -188,6 +188,7 @@ describe('ppiTest', () => {
 
   describe('add adUnitPattern', () => {
     it('should validate aup before adding', () => {
+      while (ppi.adUnitPatterns.length) ppi.adUnitPatterns.pop();
       let validAUPs = [
         {
           slotPattern: '^.*header-bid-tag-0$',
@@ -631,7 +632,7 @@ describe('ppiTest', () => {
       expect(adUnit.bids[1]).to.deep.equal(aup.bids[1]);
       expect(adUnit.bids[0].params).to.deep.equal(expectedAppliedParameters);
       expect(aup.slotPattern).to.equal(adUnit.fpd.context.pbAdSlot);
-      expect({name: 'gam', adSlot: aup.slotPattern}).to.deep.equal(adUnit.fpd.context.adServer);
+      expect({ name: 'gam', adSlot: aup.slotPattern }).to.deep.equal(adUnit.fpd.context.adServer);
 
       to.value = 'test-1';
       to.type = 'div';
@@ -640,7 +641,7 @@ describe('ppiTest', () => {
       ppi.applyFirstPartyData(adUnit, aup, to);
 
       expect(aup.slotPattern).to.equal(adUnit.fpd.context.pbAdSlot);
-      expect({name: 'gam', adSlot: aup.slotPattern}).to.deep.equal(adUnit.fpd.context.adServer);
+      expect({ name: 'gam', adSlot: aup.slotPattern }).to.deep.equal(adUnit.fpd.context.adServer);
 
       let slot = makeGPTSlot('/test/adUnitPath', '');
       to.value = slot;
@@ -650,7 +651,191 @@ describe('ppiTest', () => {
       ppi.applyFirstPartyData(adUnit, aup, to);
 
       expect('/test/adUnitPath').to.equal(adUnit.fpd.context.pbAdSlot);
-      expect({name: 'gam', adSlot: '/test/adUnitPath'}).to.deep.equal(adUnit.fpd.context.adServer);
+      expect({ name: 'gam', adSlot: '/test/adUnitPath' }).to.deep.equal(adUnit.fpd.context.adServer);
+    });
+  });
+
+  describe('request bids', () => {
+    // clear everything
+    while (ppi.adUnitPatterns.length) ppi.adUnitPatterns.pop();
+    window.googletag.pubads().setSlots([]);
+
+    let adUnitPatterns = [
+      {
+        slotPattern: '^.*header-bid-tag-0$',
+        divPattern: '',
+        code: 'pattern-1',
+        bids: [
+          {
+            bidder: 'appnexus',
+            params: {
+              placementId: 13144370,
+              keywords: '##data.keywords##'
+            },
+          },
+          {
+            bidder: 'rubicon',
+            params: {
+              accountId: '1001',
+              siteId: '113932',
+              zoneId: '535510',
+              visitor: '##data.visitor##'
+            }
+          }],
+        mediaTypes: {
+          banner: {
+            sizes: [[300, 250], [300, 600]]
+          },
+        },
+      }, {
+        slotPattern: '',
+        divPattern: '^test-.$',
+        code: 'pattern-2',
+        bids: [
+          {
+            bidder: 'appnexus',
+            params: {
+              placementId: 13144370,
+              keywords: '##data.keywords##'
+            },
+          },
+          {
+            bidder: 'rubicon',
+            params: {
+              accountId: '1001',
+              siteId: '113932',
+              zoneId: '535510',
+              visitor: '##data.visitor##'
+            }
+          }],
+        mediaTypes: {
+          banner: {
+            sizes: [[300, 250], [300, 600]]
+          },
+        },
+      }
+    ];
+
+    let transactionObjects = [
+      {
+        value: 'test-1',
+        type: 'div',
+        hbSource: 'cache',
+        hbDestination: {
+          type: 'page',
+          values: { div: 'test-1' }
+        }
+      },
+      {
+        value: 'cannot match',
+        type: 'div',
+        hbSource: 'cache',
+        hbDestination: {
+          type: 'page',
+          values: { div: 'test-2' }
+        }
+      },
+      {
+        value: '/19968336/header-bid-tag-0',
+        type: 'slot',
+        hbSource: 'cache',
+        hbDestination: {
+          type: 'page',
+          values: { div: 'test-5' }
+        }
+      },
+    ];
+    ppi.addAdUnitPatterns(adUnitPatterns);
+
+    for (let i = 1; i <= 4; i++) {
+      let newDiv = document.createElement('div');
+      newDiv.id = 'test-' + i;
+
+      document.body.appendChild(newDiv);
+    }
+
+    let sandbox;
+    beforeEach(() => {
+      sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+    it('should request bids from cache to page', () => {
+      sandbox.stub($$PREBID_GLOBAL$$, 'getHighestCpmBids').callsFake((key) => {
+        if (key === 'pattern-1') return [{ width: 300, height: 250 }];
+        return [];
+      });
+
+      let res = ppi.requestBids(transactionObjects);
+      expect(res[0].match.status).to.equal(true);
+      expect(res[0].match.aup.code).to.equal('pattern-1');
+      expect(res[1].match.status).to.equal(false);
+      expect(res[2].match.status).to.equal(true);
+      expect(res[2].match.aup.code).to.equal('pattern-2');
+    });
+
+    it('should request bids from cache to callback', () => {
+      sandbox.stub($$PREBID_GLOBAL$$, 'getBidResponsesForAdUnitCode').callsFake((key) => {
+        if (key === 'pattern-1') {
+          return [{
+            width: 300,
+            height: 250,
+            status: 'available',
+            responseTimestamp: new Date().getTime(),
+            ttl: 60,
+            cpm: 1.23,
+          }];
+        }
+        return [];
+      });
+      let tos = utils.deepClone(transactionObjects);
+      tos[0].hbDestination = {
+        type: 'callback',
+        values: {
+          callback: (bids) => {
+            expect(bids.length).to.equal(1);
+            expect(bids[0].cpm).to.equal(1.23);
+          }
+        }
+      };
+      tos[1].hbDestination = {
+        type: 'callback',
+        values: {
+          callback: (bids) => {
+            expect(bids).to.be.a('undefined');
+          }
+        }
+      };
+      tos[2].hbDestination = {
+        type: 'callback',
+        values: {
+          callback: 'this should be function, not a string'
+        }
+      };
+
+      ppi.requestBids(tos);
+    });
+
+    it('should cache new bids', () => {
+      sandbox.stub($$PREBID_GLOBAL$$, 'requestBids').callsFake(({ bidsBackHandler }) => {
+        bidsBackHandler();
+      });
+      let tos = utils.deepClone(transactionObjects);
+      tos.forEach(to => {
+        to.hbSource = 'auction';
+        to.hbDestination = {
+          type: 'cache',
+        }
+      })
+
+      let res = ppi.requestBids(tos);
+      expect(res[0].match.status).to.equal(true);
+      expect(res[0].match.aup.code).to.equal('pattern-1');
+      expect(res[1].match.status).to.equal(false);
+      expect(res[2].match.status).to.equal(true);
+      expect(res[2].match.aup.code).to.equal('pattern-2');
     });
   });
 });
