@@ -96,6 +96,21 @@ export function addAdUnitPatterns(aups) {
   });
 }
 
+/**
+ * @param {function} mappingFunction - to map custom params to adUnits.
+ *                     function should accept two arguments: to: <transactionObject>, aup: <adUnitPattern>
+ *                     function returns true if transaction object matches ad unit pattern, else false
+ */
+let customMappingFunction;
+export function setCustomMappingFunction(mappingFunction) {
+  if (!utils.isFn(mappingFunction)) {
+    utils.logError('[PPI] custom mapping function must be a function', mappingFunction);
+    return;
+  }
+
+  customMappingFunction = mappingFunction;
+}
+
 function validateAUP(aup) {
   if (!aup.divPattern && !aup.slotPattern) {
     aup.error = `can't create AUP without slot pattern or div pattern`;
@@ -398,7 +413,7 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
         break;
       default:
         // this should never happen, if transaction object passed validation
-        utils.logError('[PPI] Invalid transaction object type', transactionObject.type)
+        utils.logError('[PPI] Invalid transaction object type', transactionObject.type);
         return false;
     }
 
@@ -406,13 +421,25 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
       return false;
     }
 
+    // check if sizes are matching
     let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
     if (!transactionObject.sizes || !transactionObject.sizes.length || !aupSizes || !aupSizes.length) {
-      return true;
+      match = true;
+    } else {
+      let matchingSizes = filterSizesByIntersection(aupSizes, transactionObject.sizes);
+      match = matchingSizes.length;
     }
 
-    let matchingSizes = filterSizesByIntersection(aupSizes, transactionObject.sizes);
-    return matchingSizes.length;
+    if (!match) {
+      return false;
+    }
+
+    // check if custom mapping function approves
+    if (customMappingFunction) {
+      return customMappingFunction(transactionObject, aup);
+    }
+
+    return true;
   });
 }
 
@@ -514,4 +541,5 @@ export const adUnitPatterns = [];
   requestBids,
   addAdUnitPatterns,
   adUnitPatterns,
+  setCustomMappingFunction,
 };
