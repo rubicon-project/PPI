@@ -1,5 +1,5 @@
 import * as utils from '../../src/utils.js';
-import { hashFnv32a } from './utils.js';
+import { hashFnv32a, getViewport } from './utils.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
 import { TransactionType, HBSource, HBDestination } from './consts.js';
 import { send } from './destination/destination.js';
@@ -109,6 +109,61 @@ export function setCustomMappingFunction(mappingFunction) {
   }
 
   customMappingFunction = mappingFunction;
+}
+
+export function addSizeMappings(sizeMappings) {
+  sizeMappings = sizeMappings || {};
+  let pbjs = getGlobal();
+  pbjs.ppi.sizeMappings = pbjs.ppi.sizeMappings || {};
+  for (var slotId in sizeMappings) {
+    if (sizeMappings.hasOwnProperty(slotId)) {
+      pbjs.rp.sizeMappings[slotId] = sizeMappings[slotId];
+    }
+  }
+}
+
+function getSizeMappingSizes(divId, viewport) {
+  let sizeMappings = getGlobal().ppi.sizeMappings;
+  if (!sizeMappings) {
+    return [];
+  }
+
+  // TODO: replace with isRegex function in (./utils.js)
+  if (['.', '*', '^', '$'].some(p => divId.indexOf(p) !== -1)) {
+    divId = '__global__';
+  }
+
+  let divSizeMappings = sizeMappings[divId] || sizeMappings['__global__'];
+  return filterSizeMappingSizes(divSizeMappings, viewport);
+}
+
+/**
+ * @param {Object} sizeMapping array of viewport -> adUnit size mappings where each size is [w, h]
+ *     [
+ *       {minViewPort: viewportSize1, sizes: [adUnitSize1, adUnitSize2, etc]}
+ *       {minViewPort: viewportSize2, sizes: [adUnitSize1, adUnitSize2, etc]}
+ *       etc
+ *     ]
+ * @param {Array} viewport dimensions [width, height]
+ * @returns {Array} of available sizes based on current viewport or undefined if no matching viewport found
+ */
+function filterSizeMappingSizes(sizeMappings, viewport) {
+  let sizes;
+  try {
+    // sort sizeMappings from biggest to smallest viewport
+    // then find the biggest one that fits in the given viewport
+    sizes = (find(sizeMappings.sort((a, b) => {
+      let aVP = a.minViewPort;
+      let bVP = b.minViewPort;
+      return bVP[0] * bVP[1] - aVP[0] * aVP[1] || bVP[0] - aVP[0] || bVP[1] - aVP[1];
+    }), (sizeMapping) => {
+      return viewport[0] >= sizeMapping.minViewPort[0] && viewport[1] >= sizeMapping.minViewPort[1];
+    })).sizes;
+  } catch (e) {
+    utils.logError('[PPI] while parsing sizeMappings:', sizeMappings, e);
+  }
+
+  return sizes;
 }
 
 function validateAUP(aup) {
@@ -385,16 +440,26 @@ export function getTOAUPPair(transactionObjects, adUnitPatterns) {
 function findMatchingAUPs(transactionObject, adUnitPatterns) {
   return adUnitPatterns.filter(aup => {
     let match = false;
+    let divId = utils.deepAccess(transactionObject, 'hbDestination.values.div');
     switch (transactionObject.type) {
       case TransactionType.SLOT:
         if (aup.slotPattern) {
           match = aup.slotPatternRegex.test(transactionObject.value);
         }
 
+        if (!transactionObject.sizes || !transactionObject.sizes.length) {
+          // get size maping sizes
+          transactionObject.sizes = getSizeMappingSizes(divId || aup.divPattern, getViewport());
+        }
+
         break;
       case TransactionType.DIV:
         if (aup.divPattern) {
           match = aup.divPatternRegex.test(transactionObject.value);
+        }
+
+        if (!transactionObject.sizes || !transactionObject.sizes.length) {
+          transactionObject.sizes = getSizeMappingSizes(divId || aup.divPattern, getViewport());
         }
 
         break;
@@ -407,7 +472,11 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
           match = match && aup.divPatternRegex.test(transactionObject.value.getSlotElementId());
         }
         // TODO: is this ok?
-        if (!transactionObject.sizes) {
+        if (!transactionObject.sizes || !transactionObject.sizes.length) {
+          divId = divId || transactionObject.value.getSlotElementId();
+          transactionObject.sizes = getSizeMappingSizes(divId, getViewport()) || getGptSlotSizes(transactionObject.value);
+        }
+        if (!transactionObject.sizes || !transactionObject.sizes.length) {
           transactionObject.sizes = getGptSlotSizes(transactionObject.value);
         }
         break;
@@ -427,7 +496,7 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
       match = true;
     } else {
       let matchingSizes = filterSizesByIntersection(aupSizes, transactionObject.sizes);
-      match = matchingSizes.length;
+      match = !!matchingSizes.length;
     }
 
     if (!match) {
@@ -542,4 +611,5 @@ export const adUnitPatterns = [];
   addAdUnitPatterns,
   adUnitPatterns,
   setCustomMappingFunction,
+  addSizeMappings,
 };
