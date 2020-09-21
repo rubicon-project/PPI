@@ -4,10 +4,13 @@ import { getGlobal } from '../../src/prebidGlobal.js';
 import { TransactionType, HBSource, HBDestination } from './consts.js';
 import { send } from './destination/destination.js';
 
+// used to track if requestBids was called
+let bidsRequested = false;
 /**
  * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
  */
 export function requestBids(transactionObjects) {
+  bidsRequested = true;
   let validationResult = validateTransactionObjects(transactionObjects);
   let transactionResult = [];
   validationResult.invalid.forEach(inv => {
@@ -103,6 +106,10 @@ export function addAdUnitPatterns(aups) {
  */
 let customMappingFunction;
 export function setCustomMappingFunction(mappingFunction) {
+  if (bidsRequested) {
+    utils.logWarn('[PPI] calling setCustomMappingFunction after requestBids could cause ad serving discrepancies or race conditions.');
+  }
+
   if (!utils.isFn(mappingFunction)) {
     utils.logError('[PPI] custom mapping function must be a function', mappingFunction);
     return;
