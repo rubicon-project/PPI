@@ -29,3 +29,19 @@ export function hashFnv32a(str, asString, seed) {
 export function getViewport() {
   return [window.innerWidth, window.innerHeight];
 }
+
+/**
+ * @param {Array} list
+ * @param {function(item:*)} callback
+ * @returns {*}
+ */
+export function find(list, callback) {
+  if (!Array.isArray(list)) {
+    return;
+  }
+  for (let i = 0; i < list.length; i++) {
+    if (callback(list[i])) {
+      return list[i];
+    }
+  }
+}

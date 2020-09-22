@@ -1,5 +1,5 @@
 import * as utils from '../../src/utils.js';
-import { hashFnv32a, getViewport } from './utils.js';
+import { hashFnv32a, getViewport, find } from './utils.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
 import { TransactionType, HBSource, HBDestination } from './consts.js';
 import { send } from './destination/destination.js';
@@ -31,7 +31,7 @@ export function requestBids(transactionObjects) {
         let to = toAUP.transactionObject;
         let au;
         if (aup) {
-          au = createAdUnit(aup, to.sizes);
+          au = createAdUnit(aup, to);
           applyFirstPartyData(au, aup, to);
         }
 
@@ -124,7 +124,7 @@ export function addSizeMappings(sizeMappings) {
   pbjs.ppi.sizeMappings = pbjs.ppi.sizeMappings || {};
   for (var slotId in sizeMappings) {
     if (sizeMappings.hasOwnProperty(slotId)) {
-      pbjs.rp.sizeMappings[slotId] = sizeMappings[slotId];
+      pbjs.ppi.sizeMappings[slotId] = sizeMappings[slotId];
     }
   }
 }
@@ -132,7 +132,7 @@ export function addSizeMappings(sizeMappings) {
 function getSizeMappingSizes(divId, viewport) {
   let sizeMappings = getGlobal().ppi.sizeMappings;
   if (!sizeMappings) {
-    return [];
+    return;
   }
 
   // TODO: replace with isRegex function in (./utils.js)
@@ -155,17 +155,22 @@ function getSizeMappingSizes(divId, viewport) {
  * @returns {Array} of available sizes based on current viewport or undefined if no matching viewport found
  */
 function filterSizeMappingSizes(sizeMappings, viewport) {
+  if (!sizeMappings) {
+    return;
+  }
+
   let sizes;
   try {
     // sort sizeMappings from biggest to smallest viewport
     // then find the biggest one that fits in the given viewport
-    sizes = (find(sizeMappings.sort((a, b) => {
+    let val = (find(sizeMappings.sort((a, b) => {
       let aVP = a.minViewPort;
       let bVP = b.minViewPort;
       return bVP[0] * bVP[1] - aVP[0] * aVP[1] || bVP[0] - aVP[0] || bVP[1] - aVP[1];
     }), (sizeMapping) => {
       return viewport[0] >= sizeMapping.minViewPort[0] && viewport[1] >= sizeMapping.minViewPort[1];
-    })).sizes;
+    }));
+    sizes = val && val.sizes;
   } catch (e) {
     utils.logError('[PPI] while parsing sizeMappings:', sizeMappings, e);
   }
@@ -362,7 +367,7 @@ function getGptSlotSizes(gptSlot) {
   let gptSlotSizes = gptSlot.getSizes();
   // if no sizes array, just return undefined (not sure if this is valid, but being defensive)
   if (!gptSlotSizes) {
-    return [];
+    return;
   }
 
   // map gpt sizes to [[w,h],...] array (filter out "fluid" size)
@@ -447,28 +452,16 @@ export function getTOAUPPair(transactionObjects, adUnitPatterns) {
 function findMatchingAUPs(transactionObject, adUnitPatterns) {
   return adUnitPatterns.filter(aup => {
     let match = false;
-    let divId = utils.deepAccess(transactionObject, 'hbDestination.values.div');
     switch (transactionObject.type) {
       case TransactionType.SLOT:
         if (aup.slotPattern) {
           match = aup.slotPatternRegex.test(transactionObject.value);
         }
-
-        if (!transactionObject.sizes || !transactionObject.sizes.length) {
-          // get size maping sizes
-          transactionObject.sizes = getSizeMappingSizes(divId || aup.divPattern, getViewport());
-        }
-
         break;
       case TransactionType.DIV:
         if (aup.divPattern) {
           match = aup.divPatternRegex.test(transactionObject.value);
         }
-
-        if (!transactionObject.sizes || !transactionObject.sizes.length) {
-          transactionObject.sizes = getSizeMappingSizes(divId || aup.divPattern, getViewport());
-        }
-
         break;
       case TransactionType.SLOT_OBJECT:
         match = true;
@@ -477,14 +470,6 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
         }
         if (aup.divPattern) {
           match = match && aup.divPatternRegex.test(transactionObject.value.getSlotElementId());
-        }
-        // TODO: is this ok?
-        if (!transactionObject.sizes || !transactionObject.sizes.length) {
-          divId = divId || transactionObject.value.getSlotElementId();
-          transactionObject.sizes = getSizeMappingSizes(divId, getViewport()) || getGptSlotSizes(transactionObject.value);
-        }
-        if (!transactionObject.sizes || !transactionObject.sizes.length) {
-          transactionObject.sizes = getGptSlotSizes(transactionObject.value);
         }
         break;
       default:
@@ -497,12 +482,14 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
       return false;
     }
 
+    let limitSizes = findLimitSizes(aup, transactionObject);
     // check if sizes are matching
     let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
-    if (!transactionObject.sizes || !transactionObject.sizes.length || !aupSizes || !aupSizes.length) {
+    // empty limitSizes ([]) means you want to exclude sizes and skip this aup
+    if (!limitSizes || !aupSizes || !aupSizes.length) {
       match = true;
     } else {
-      let matchingSizes = filterSizesByIntersection(aupSizes, transactionObject.sizes);
+      let matchingSizes = filterSizesByIntersection(aupSizes, limitSizes);
       match = !!matchingSizes.length;
     }
 
@@ -519,7 +506,8 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
   });
 }
 
-export function createAdUnit(adUnitPattern, limitSizes) {
+export function createAdUnit(adUnitPattern, transactionObject) {
+  let limitSizes = findLimitSizes(adUnitPattern, transactionObject);
   let adUnit;
   try {
     // copy pattern for conversion into adUnit
@@ -557,6 +545,42 @@ export function createAdUnit(adUnitPattern, limitSizes) {
   }
 
   return adUnit;
+}
+
+function findLimitSizes(aup, transactionObject) {
+  let divId = utils.deepAccess(transactionObject, 'hbDestination.values.div');
+  let gptSizes;
+  switch (transactionObject.type) {
+    case TransactionType.SLOT:
+    case TransactionType.DIV:
+      divId = divId || aup.divPattern;
+      break;
+    case TransactionType.SLOT_OBJECT:
+      divId = divId || transactionObject.value.getSlotElementId();
+      gptSizes = getGptSlotSizes(transactionObject.value);
+      break;
+    default:
+      utils.logError('[PPI] Invalid transaction object type', transactionObject.type);
+      return;
+  }
+
+  let sizeMappingSizes = getSizeMappingSizes(divId, getViewport());
+  let limitSizes;
+  switch (true) {
+    // added & transactionObject.sizes.length in case there are pubs passing []
+    case !!(transactionObject.sizes && transactionObject.sizes.length):
+      limitSizes = transactionObject.sizes;
+      break;
+    // undefined means no size mapping found, while [] means there is "empty" size mapping
+    case !!sizeMappingSizes:
+      limitSizes = sizeMappingSizes;
+      break;
+    case !!gptSizes:
+      limitSizes = gptSizes;
+      break;
+  }
+
+  return limitSizes;
 }
 
 export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {

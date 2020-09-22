@@ -448,7 +448,6 @@ describe('ppiTest', () => {
         ppi.addAdUnitPatterns(adUnitPatterns);
         let result = ppi.getTOAUPPair(tos, ppi.adUnitPatterns);
         expect(tos.length).to.equal(result.length);
-        expect(result[0].transactionObject.sizes).to.deep.equal(gptSlotSizes);
         for (let i = 0; i < result.length - 1; i++) {
           expect(adUnitPatterns[i].value).to.equal(result[i].adUnitPattern.value);
           expect(adUnitPatterns[i].type).to.equal(result[i].adUnitPattern.type);
@@ -476,8 +475,13 @@ describe('ppiTest', () => {
           }
         ],
       };
+      let to = {
+        type: 'slot',
+        value: '/19968336/header-bid-tag-0',
+        sizes: sizes,
+      };
 
-      let adUnit = ppi.createAdUnit(aup, sizes);
+      let adUnit = ppi.createAdUnit(aup, to);
       expect(aup.bids).to.deep.equal(adUnit.bids);
       expect(sizes).to.deep.equal(utils.deepAccess(adUnit, 'mediaTypes.banner.sizes'));
       expect(adUnit.slotPattern).to.be.a('undefined');
@@ -486,17 +490,18 @@ describe('ppiTest', () => {
 
       // now add code to aup
       aup.code = 'pattern-1';
-      adUnit = ppi.createAdUnit(aup, sizes);
+      adUnit = ppi.createAdUnit(aup, to);
       expect(adUnit.code).to.equal('pattern-1');
 
       // now add sizes to aup
       utils.deepSetValue(aup, 'mediaTypes.banner.sizes', sizes);
-      adUnit = ppi.createAdUnit(aup, []);
+      to.sizes = [];
+      adUnit = ppi.createAdUnit(aup, to);
       expect(adUnit.mediaTypes.banner.sizes).to.deep.equal(sizes);
 
       // now do the size intersection between aup sizes and limit sizes
-      let limitSizes = [[2, 2], [1, 1], [3, 3], [4, 4]];
-      adUnit = ppi.createAdUnit(aup, limitSizes);
+      to.sizes = [[2, 2], [1, 1], [3, 3], [4, 4]];
+      adUnit = ppi.createAdUnit(aup, to);
       expect(adUnit.mediaTypes.banner.sizes).to.deep.equal([[2, 2], [1, 1]]);
     });
 
@@ -627,7 +632,7 @@ describe('ppiTest', () => {
         }
       };
 
-      let adUnit = ppi.createAdUnit(aup);
+      let adUnit = ppi.createAdUnit(aup, to);
       ppi.applyFirstPartyData(adUnit, aup, to);
       expect(adUnit.bids[1]).to.deep.equal(aup.bids[1]);
       expect(adUnit.bids[0].params).to.deep.equal(expectedAppliedParameters);
@@ -637,7 +642,7 @@ describe('ppiTest', () => {
       to.value = 'test-1';
       to.type = 'div';
 
-      adUnit = ppi.createAdUnit(aup);
+      adUnit = ppi.createAdUnit(aup, to);
       ppi.applyFirstPartyData(adUnit, aup, to);
 
       expect(aup.slotPattern).to.equal(adUnit.fpd.context.pbAdSlot);
@@ -647,7 +652,7 @@ describe('ppiTest', () => {
       to.value = slot;
       to.type = 'slotObject';
 
-      adUnit = ppi.createAdUnit(aup);
+      adUnit = ppi.createAdUnit(aup, to);
       ppi.applyFirstPartyData(adUnit, aup, to);
 
       expect('/test/adUnitPath').to.equal(adUnit.fpd.context.pbAdSlot);
