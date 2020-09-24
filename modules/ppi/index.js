@@ -584,16 +584,9 @@ function findLimitSizes(aup, transactionObject) {
 }
 
 export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
-  let targeting = transactionObject.targeting || {};
-
-  adUnit.bids.forEach(bid => {
-    if (!bid.params) {
-      return;
-    }
-    for (const paramName in bid.params) {
-      replaceBidParameters(bid.params, paramName, targeting);
-    }
-  });
+  if (transactionObject.targeting) {
+    adUnit.fpd = transactionObject.targeting;
+  }
 
   let slotName = getGPTSlotName(transactionObject, adUnitPattern);
   if (!slotName) {
@@ -605,34 +598,6 @@ export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
     name: 'gam',
     adSlot: slotName
   });
-}
-
-function replaceBidParameters(params, paramName, targeting) {
-  let paramValue = params[paramName];
-  if (utils.isPlainObject(paramValue)) {
-    for (const nestedKey in paramValue) {
-      replaceBidParameters(paramValue, nestedKey, targeting);
-    }
-  } else if (Array.isArray(paramValue)) {
-    for (let i = 0; i < paramValue.length; i++) {
-      replaceBidParameters(paramValue, i, targeting);
-    }
-    params[paramName] = paramValue.filter(p => p !== undefined);
-  }
-  if (utils.isStr(paramValue) && isPlaceHolder(paramValue)) {
-    let placeholderKey = paramValue.slice(7, -2);
-    if (targeting[placeholderKey]) {
-      utils.logInfo(`[PPI] - found placeholder: '${paramValue}' with name '${placeholderKey}', replacing it with value from targeting: `, targeting[placeholderKey]);
-      params[paramName] = targeting[placeholderKey];
-    } else {
-      utils.logInfo(`[PPI] - for placeholder '${paramValue}' with name '${placeholderKey}', didn't find targeting value, will remove '${paramName}' from bid params`);
-      delete params[paramName];
-    }
-  }
-}
-
-function isPlaceHolder(value) {
-  return value.indexOf('##data.') === 0 && value.slice(-2) == '##';
 }
 
 export const adUnitPatterns = [];
