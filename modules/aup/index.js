@@ -9,58 +9,38 @@ export const aupInventorySubmodule = {
   type: 'hbInventory',
   name: 'AUP',
 
-  createAdUnits(transactionObjects) {
-    let result = [];
-    let allTOs = [];
-    transactionObjects.forEach(to => {
-      if (to.type !== TransactionType.AUTO_SLOTS) {
-        allTOs.push(to);
-        return;
-      }
-      allTOs = allTOs.concat(transformAutoSlots(to));
-    });
-    let toAUPPair = getTOAUPPair(allTOs, adUnitPatterns);
-    toAUPPair.forEach(toAUP => {
-      let aup = toAUP.adUnitPattern;
-      let to = toAUP.transactionObject;
-      let au;
-      if (aup) {
-        au = createAdUnit(aup, to);
-      }
-
-      to.divId = getDivId(to, aup);
-      to.slotName = getSlotName(to, aup);
-
-      result.push({
-        transactionObject: to,
-        adUnit: au,
-      });
-    });
-
-    return result;
-  },
+  createAdUnits,
 };
 
-export const adUnitPatterns = [];
-export function addAdUnitPatterns(aups) {
-  aups.forEach(aup => {
-    try {
-      aup = JSON.parse(JSON.stringify(aup));
-      aup = validateAUP(aup);
-      if (aup.error) {
-        throw aup.error;
-      }
-      if (aup.divPattern) {
-        aup.divPatternRegex = new RegExp(aup.divPattern, 'i');
-      }
-      if (aup.slotPattern) {
-        aup.slotPatternRegex = new RegExp(aup.slotPattern, 'i');
-      }
-      adUnitPatterns.push(aup);
-    } catch (e) {
-      utils.logError('[PPI] Error creating Ad Unit Pattern ', e)
+export function createAdUnits(transactionObjects) {
+  let result = [];
+  let allTOs = [];
+  transactionObjects.forEach(to => {
+    if (to.type !== TransactionType.AUTO_SLOTS) {
+      allTOs.push(to);
+      return;
     }
+    allTOs = allTOs.concat(transformAutoSlots(to));
   });
+  let toAUPPair = getTOAUPPair(allTOs, adUnitPatterns);
+  toAUPPair.forEach(toAUP => {
+    let aup = toAUP.adUnitPattern;
+    let to = toAUP.transactionObject;
+    let au;
+    if (aup) {
+      au = createAdUnit(aup, to);
+    }
+
+    to.divId = getDivId(to, aup);
+    to.slotName = getSlotName(to, aup);
+
+    result.push({
+      transactionObject: to,
+      adUnit: au,
+    });
+  });
+
+  return result;
 }
 
 export function createAdUnit(adUnitPattern, transactionObject) {
@@ -313,6 +293,28 @@ export function setCustomMappingFunction(mappingFunction) {
   }
 
   customMappingFunction = mappingFunction;
+}
+
+export const adUnitPatterns = [];
+export function addAdUnitPatterns(aups) {
+  aups.forEach(aup => {
+    try {
+      aup = JSON.parse(JSON.stringify(aup));
+      aup = validateAUP(aup);
+      if (aup.error) {
+        throw aup.error;
+      }
+      if (aup.divPattern) {
+        aup.divPatternRegex = new RegExp(aup.divPattern, 'i');
+      }
+      if (aup.slotPattern) {
+        aup.slotPatternRegex = new RegExp(aup.slotPattern, 'i');
+      }
+      adUnitPatterns.push(aup);
+    } catch (e) {
+      utils.logError('[PPI] Error creating Ad Unit Pattern ', e)
+    }
+  });
 }
 
 (getGlobal()).ppi = (getGlobal()).ppi || {};

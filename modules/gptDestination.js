@@ -129,12 +129,4 @@ function setTargeting(adUnitCodes, mappings) {
   });
 }
 
-// TODO: remove
-export const TransactionType = {
-  SLOT: 'slot',
-  DIV: 'div',
-  SLOT_OBJECT: 'slotObject',
-  AUTO_SLOTS: 'autoSlots',
-};
-
 submodule('ppi', gptDestinationSubmodule);
