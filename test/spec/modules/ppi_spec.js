@@ -504,160 +504,6 @@ describe('ppiTest', () => {
       adUnit = ppi.createAdUnit(aup, to);
       expect(adUnit.mediaTypes.banner.sizes).to.deep.equal([[2, 2], [1, 1]]);
     });
-
-    it('should apply first party data to adUnit', () => {
-      let aup = {
-        slotPattern: '/19968336/header-bid-tag-0',
-        divPattern: 'test-.*',
-        bids: [
-          {
-            bidder: 'rubicon',
-            params: {
-              foo: '##data.foo##',
-              fob: {
-                bar: '##data.bar##',
-                baz: '##data.foo##',
-                zero: 0,
-                false: false,
-                empty: ''
-              },
-              animal: {
-                noises: {
-                  squeek: ['##data.mouse##', '##data.rat##'],
-                  silence: ['##data.rabbit##', '##data.butterfly##', {
-                    bugs: ['##data.butterfly##', '##data.worm##'],
-                    sea: '##data.starfish##'
-                  }],
-                  bark: '##data.dog##'
-                }
-              },
-              l1: {
-                l2: {
-                  l3: {
-                    l4: '##data.level4##',
-                    'l4.5': '##data.foo##|##data.bar##',
-                    falsyArray: [0, false, '']
-                  },
-                  arrayOfObjsFalsy: [
-                    {
-                      validString: 'Hello',
-                      zero: 0,
-                      false: false,
-                      empty: ''
-                    },
-                    {
-                      validString1: 'Hello',
-                      zero1: 0,
-                      false1: false,
-                      empty1: ''
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          {
-            bidder: 'appnexus',
-            params: {
-              placementId: 13144370,
-            }
-          }
-        ],
-      };
-
-      let to = {
-        type: 'slot',
-        value: '/19968336/header-bid-tag-0',
-        targeting: {
-          dog: 'dog',
-          butterfly: 'butterfly',
-          rabbit: 'rabbit',
-          worm: 'worm',
-          rat: 'rat',
-          mouse: 'mouse',
-          foo: 'foo',
-          bar: 'bar',
-          level4: 'level4',
-          starfish: 'starfish',
-          null: null,
-          undef: undefined,
-          false: false,
-          true: true,
-          empty: '',
-          zero: 0
-        },
-      };
-
-      let expectedAppliedParameters = {
-        foo: 'foo',
-        fob: {
-          bar: 'bar',
-          baz: 'foo',
-          zero: 0,
-          false: false,
-          empty: ''
-        },
-        animal: {
-          noises: {
-            squeek: ['mouse', 'rat'],
-            silence: ['rabbit', 'butterfly', {
-              bugs: ['butterfly', 'worm'],
-              sea: 'starfish'
-            }],
-            bark: 'dog'
-          }
-        },
-        l1: {
-          l2: {
-            l3: {
-              l4: 'level4',
-              // 'l4.5': 'foo|bar',
-              falsyArray: [0, false, '']
-            },
-            arrayOfObjsFalsy: [
-              {
-                validString: 'Hello',
-                zero: 0,
-                false: false,
-                empty: ''
-              },
-              {
-                validString1: 'Hello',
-                zero1: 0,
-                false1: false,
-                empty1: ''
-              }
-            ]
-          }
-        }
-      };
-
-      let adUnit = ppi.createAdUnit(aup, to);
-      ppi.applyFirstPartyData(adUnit, aup, to);
-      expect(adUnit.bids[1]).to.deep.equal(aup.bids[1]);
-      expect(adUnit.bids[0].params).to.deep.equal(expectedAppliedParameters);
-      expect(aup.slotPattern).to.equal(adUnit.fpd.context.pbAdSlot);
-      expect({ name: 'gam', adSlot: aup.slotPattern }).to.deep.equal(adUnit.fpd.context.adServer);
-
-      to.value = 'test-1';
-      to.type = 'div';
-
-      adUnit = ppi.createAdUnit(aup, to);
-      ppi.applyFirstPartyData(adUnit, aup, to);
-
-      expect(aup.slotPattern).to.equal(adUnit.fpd.context.pbAdSlot);
-      expect({ name: 'gam', adSlot: aup.slotPattern }).to.deep.equal(adUnit.fpd.context.adServer);
-
-      let slot = makeGPTSlot('/test/adUnitPath', '');
-      to.value = slot;
-      to.type = 'slotObject';
-
-      adUnit = ppi.createAdUnit(aup, to);
-      ppi.applyFirstPartyData(adUnit, aup, to);
-
-      expect('/test/adUnitPath').to.equal(adUnit.fpd.context.pbAdSlot);
-      expect({ name: 'gam', adSlot: '/test/adUnitPath' }).to.deep.equal(adUnit.fpd.context.adServer);
-    });
   });
 
   describe('request bids', () => {
@@ -675,7 +521,6 @@ describe('ppiTest', () => {
             bidder: 'appnexus',
             params: {
               placementId: 13144370,
-              keywords: '##data.keywords##'
             },
           },
           {
@@ -684,7 +529,6 @@ describe('ppiTest', () => {
               accountId: '1001',
               siteId: '113932',
               zoneId: '535510',
-              visitor: '##data.visitor##'
             }
           }],
         mediaTypes: {
@@ -693,7 +537,7 @@ describe('ppiTest', () => {
           },
         },
       }, {
-        slotPattern: '',
+        slotPattern: '/19968336/header-bid-tag-1',
         divPattern: '^test-.$',
         code: 'pattern-2',
         bids: [
@@ -701,7 +545,6 @@ describe('ppiTest', () => {
             bidder: 'appnexus',
             params: {
               placementId: 13144370,
-              keywords: '##data.keywords##'
             },
           },
           {
@@ -710,7 +553,6 @@ describe('ppiTest', () => {
               accountId: '1001',
               siteId: '113932',
               zoneId: '535510',
-              visitor: '##data.visitor##'
             }
           }],
         mediaTypes: {
@@ -841,6 +683,91 @@ describe('ppiTest', () => {
       expect(res[1].match.status).to.equal(false);
       expect(res[2].match.status).to.equal(true);
       expect(res[2].match.aup.code).to.equal('pattern-2');
+    });
+
+    it('should refresh gpt slots from cache', () => {
+      while (ppi.adUnitPatterns.length) ppi.adUnitPatterns.pop();
+      ppi.addAdUnitPatterns(adUnitPatterns);
+      window.googletag.pubads().setSlots([]);
+      let gptSlotSizes = [[300, 250], [300, 600]];
+      let gptSlots = [
+        makeGPTSlot('/19968336/header-bid-tag-0', 'test-1', gptSlotSizes),
+        makeGPTSlot('/19968336/no-match', 'no-match', gptSlotSizes),
+      ];
+      let _pubads = window.googletag.pubads();
+      _pubads.refresh = (slots) => {
+        expect(slots).to.deep.equal(gptSlots);
+      };
+      window.googletag.pubads = () => { return _pubads };
+      window.googletag.cmd = window.googletag.cmd || [];
+      window.googletag.cmd.push = function (command) {
+        command.call();
+      };
+      let tos = [{
+        value: gptSlots[0],
+        type: 'slotObject',
+        hbSource: 'cache',
+        hbDestination: {
+          type: 'gpt',
+          values: { div: 'test-1' }
+        },
+      },
+      {
+        value: gptSlots[1],
+        type: 'slotObject',
+        hbSource: 'cache',
+        hbDestination: {
+          type: 'gpt',
+        }
+      }];
+      let res = ppi.requestBids(tos);
+      expect(res[0].match.status).to.equal(true);
+      expect(res[0].match.aup.code).to.equal('pattern-1');
+      expect(res[1].match.status).to.equal(false);
+    });
+
+    it('should create and refresh gpt slots from cache', () => {
+      while (ppi.adUnitPatterns.length) ppi.adUnitPatterns.pop();
+      ppi.addAdUnitPatterns(adUnitPatterns);
+      window.googletag.pubads().setSlots([]);
+      let _pubads = window.googletag.pubads();
+      _pubads.refresh = (slots) => {
+      };
+
+      window.googletag.defineSlot = (adUnitPath, sizes, divId) => {
+        let slot = makeGPTSlot(adUnitPath, divId, sizes);
+        slot.addService = () => { };
+        return slot;
+      }
+      window.googletag.display = () => { };
+      window.googletag.pubads = () => { return _pubads };
+      window.googletag.cmd = window.googletag.cmd || [];
+      window.googletag.cmd.push = function (command) {
+        command.call();
+      };
+      let tos = [{
+        value: 'test-1',
+        type: 'div',
+        hbSource: 'cache',
+        hbDestination: {
+          type: 'gpt',
+        }
+      },
+      {
+        value: '/19968336/header-bid-tag-0',
+        type: 'slot',
+        hbSource: 'cache',
+        hbDestination: {
+          type: 'gpt',
+          values: { div: 'test-2' }
+        }
+      }];
+
+      let res = ppi.requestBids(tos);
+      expect(res[0].match.status).to.equal(true);
+      expect(res[0].match.aup.code).to.equal('pattern-2');
+      expect(res[1].match.status).to.equal(true);
+      expect(res[1].match.aup.code).to.equal('pattern-1');
     });
   });
 });
