@@ -3,11 +3,10 @@ import { TransactionType } from './../consts.js';
 import * as utils from '../../../src/utils.js';
 
 window.googletag = window.googletag || {};
-let googletag = window.googletag;
-googletag.cmd = googletag.cmd || [];
+window.googletag.cmd = window.googletag.cmd || [];
 
 export function send(destinationObjects) {
-  googletag.cmd.push(() => {
+  window.googletag.cmd.push(() => {
     let divIdSlotMapping = getDivIdGPTSlotMapping();
     let gptSlotsToRefresh = [];
     let adUnitCodes = [];
@@ -53,16 +52,16 @@ export function send(destinationObjects) {
       mappings[code] = divId;
     });
     setTargeting(adUnitCodes, mappings);
-    googletag.pubads().refresh(gptSlotsToRefresh);
+    window.googletag.pubads().refresh(gptSlotsToRefresh);
   });
 }
 
 function createGPTSlot(slotId, sizes, divId) {
   let slot;
   try {
-    slot = googletag.defineSlot(slotId, sizes, divId);
-    slot.addService(googletag.pubads());
-    googletag.display(slot);
+    slot = window.googletag.defineSlot(slotId, sizes, divId);
+    slot.addService(window.googletag.pubads());
+    window.googletag.display(slot);
   } catch (e) {
     utils.logError('[PPI] while creating GTP slot:', e);
   }
