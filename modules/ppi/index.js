@@ -1,8 +1,13 @@
 import * as utils from '../../src/utils.js';
 import { hashFnv32a, getViewport, find } from './utils.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
-import { TransactionType, HBSource, HBDestination } from './consts.js';
-import { send } from './destination/destination.js';
+import { TransactionType, HBSource, HBDestination, ModuleType } from './consts.js';
+import { module } from '../../src/hook.js';
+
+/** @type {Submodule[name]->handle} */
+let destinationRegistry = {};
+let sourceRegistry = {};
+let inventoryRegistry = {};
 
 // used to track if requestBids was called
 let bidsRequested = false;
@@ -43,20 +48,9 @@ export function requestBids(transactionObjects) {
         transactionResult.push(tr);
       });
 
-      switch (source) {
-        case HBSource.CACHE:
-          send(dest, destObjects);
-          break;
-        case HBSource.AUCTION:
-          getGlobal().requestBids({
-            adUnits: destObjects.filter(d => d.adUnit).map(destObj => destObj.adUnit),
-            bidsBackHandler: (bids) => {
-              utils.logInfo('[PPI] - bids from bids back handler: ', bids);
-              send(dest, destObjects);
-            }
-          });
-          break;
-      }
+      sourceRegistry[source].send(destObjects, () => {
+        destinationRegistry[dest].send(destObjects);
+      });
     }
   }
 
@@ -600,6 +594,27 @@ export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
   });
 }
 
+/**
+ * enable submodule in PPI
+ * @param {Submodule} submodule
+ */
+export function attachSubmodule(submodule) {
+  switch (submodule.type) {
+    case ModuleType.HBInventory:
+      inventoryRegistry[submodule.name] = submodule;
+      break;
+    case ModuleType.HBSource:
+      sourceRegistry[submodule.name] = submodule;
+      break;
+    case ModuleType.HBDestination:
+      destinationRegistry[submodule.name] = submodule;
+      break;
+    default:
+      utils.logError('[PPI] Invalid submodule type', submodule.type);
+      break;
+  }
+}
+
 export const adUnitPatterns = [];
 
 (getGlobal()).ppi = {
@@ -609,3 +624,5 @@ export const adUnitPatterns = [];
   setCustomMappingFunction,
   addSizeMappings,
 };
+
+module('ppi', attachSubmodule);

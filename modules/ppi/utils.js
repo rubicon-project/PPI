@@ -45,3 +45,7 @@ export function find(list, callback) {
     }
   }
 }
+
+export function isRegex(str) {
+  return ['.', '*', '^', '$'].some(p => str.indexOf(p) !== -1);
+}

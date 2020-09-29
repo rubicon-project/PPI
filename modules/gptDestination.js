@@ -1,60 +1,66 @@
-import { getGlobal } from '../../../src/prebidGlobal.js';
-import { TransactionType } from './../consts.js';
-import * as utils from '../../../src/utils.js';
+import { getGlobal } from '../src/prebidGlobal.js';
+import * as utils from '../src/utils.js';
+import { submodule } from '../src/hook.js';
 
 window.googletag = window.googletag || {};
 window.googletag.cmd = window.googletag.cmd || [];
 
-export function send(destinationObjects) {
-  window.googletag.cmd.push(() => {
-    let divIdSlotMapping = getDivIdGPTSlotMapping();
-    let gptSlotsToRefresh = [];
-    let adUnitCodes = [];
-    let mappings = {};
-    destinationObjects.forEach(destObj => {
-      let divId = getDivId(destObj.transactionObject);
-      if (!divId) {
-        utils.logError('[PPI] GPT Destination Module: unable to find target div id for transaction object: ', destObj.transactionObject);
-        return;
-      }
+/** @type {Submodule} */
+export const gptDestinationSubmodule = {
+  type: 'hbDestination',
+  name: 'gpt',
 
-      let slotId = getSlotId(destObj.transactionObject, divIdSlotMapping);
-      if (!slotId) {
-        utils.logError('[PPI] GPT Destination Module: unable to find slot id for transaction object: ', destObj.transactionObject);
-        return;
-      }
+  send(destinationObjects) {
+    window.googletag.cmd.push(() => {
+      let divIdSlotMapping = getDivIdGPTSlotMapping();
+      let gptSlotsToRefresh = [];
+      let adUnitCodes = [];
+      let mappings = {};
+      destinationObjects.forEach(destObj => {
+        let divId = getDivId(destObj.transactionObject);
+        if (!divId) {
+          utils.logError('[PPI] GPT Destination Module: unable to find target div id for transaction object: ', destObj.transactionObject);
+          return;
+        }
 
-      let adUnitSizes = [];
-      if (destObj.adUnit) {
-        adUnitSizes = utils.deepAccess(destObj.adUnit, 'mediaTypes.banner.sizes');
-      }
+        let slotId = getSlotId(destObj.transactionObject, divIdSlotMapping);
+        if (!slotId) {
+          utils.logError('[PPI] GPT Destination Module: unable to find slot id for transaction object: ', destObj.transactionObject);
+          return;
+        }
 
-      // existing gpt slot
-      let gptSlot = divIdSlotMapping[divId];
-      if (!gptSlot) {
-        gptSlot = createGPTSlot(slotId, adUnitSizes, divId);
-      } else if (destObj.transactionObject.match.status) {
-        validateExistingSlot(gptSlot, slotId, adUnitSizes, divId);
-      }
+        let adUnitSizes = [];
+        if (destObj.adUnit) {
+          adUnitSizes = utils.deepAccess(destObj.adUnit, 'mediaTypes.banner.sizes');
+        }
 
-      // create gpt slot failed
-      if (!gptSlot) {
-        return;
-      }
+        // existing gpt slot
+        let gptSlot = divIdSlotMapping[divId];
+        if (!gptSlot) {
+          gptSlot = createGPTSlot(slotId, adUnitSizes, divId);
+        } else if (destObj.transactionObject.match.status) {
+          validateExistingSlot(gptSlot, slotId, adUnitSizes, divId);
+        }
 
-      gptSlotsToRefresh.push(gptSlot);
-      if (!destObj.adUnit) {
-        return;
-      }
-      let code = destObj.adUnit.code;
-      adUnitCodes.push(code);
+        // create gpt slot failed
+        if (!gptSlot) {
+          return;
+        }
 
-      mappings[code] = divId;
+        gptSlotsToRefresh.push(gptSlot);
+        if (!destObj.adUnit) {
+          return;
+        }
+        let code = destObj.adUnit.code;
+        adUnitCodes.push(code);
+
+        mappings[code] = divId;
+      });
+      setTargeting(adUnitCodes, mappings);
+      window.googletag.pubads().refresh(gptSlotsToRefresh);
     });
-    setTargeting(adUnitCodes, mappings);
-    window.googletag.pubads().refresh(gptSlotsToRefresh);
-  });
-}
+  },
+};
 
 function createGPTSlot(slotId, sizes, divId) {
   let slot;
@@ -164,3 +170,13 @@ function setTargeting(adUnitCodes, mappings) {
     }
   });
 }
+
+// TODO: remove
+export const TransactionType = {
+  SLOT: 'slot',
+  DIV: 'div',
+  SLOT_OBJECT: 'slotObject',
+  AUTO_SLOTS: 'autoSlots',
+};
+
+submodule('ppi', gptDestinationSubmodule);

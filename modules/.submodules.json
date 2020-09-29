@@ -25,5 +25,14 @@
     "browsiRtdProvider",
     "audigentRtdProvider",
     "jwplayerRtdProvider"
+  ],
+  "ppi": [
+    "cacheDestination",
+    "callbackDestination",
+    "gptDestination",
+    "pageDestination",
+    "auctionSource",
+    "cacheSource",
+    "aup"
   ]
 }

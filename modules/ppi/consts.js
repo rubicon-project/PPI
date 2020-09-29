@@ -16,3 +16,9 @@ export const TransactionType = {
   SLOT_OBJECT: 'slotObject',
   AUTO_SLOTS: 'autoSlots',
 };
+
+export const ModuleType = {
+  HBInventory: 'hbInventory',
+  HBSource: 'hbSource',
+  HBDestination: 'hbDestination',
+};
