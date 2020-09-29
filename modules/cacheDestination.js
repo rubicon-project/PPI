@@ -8,7 +8,7 @@ export const cacheDestinationSubmodule = {
 
   send(destinationObjects) {
     destinationObjects.forEach(destObj => {
-      if (destObj.transactionObject.match.status) {
+      if (destObj.adUnit) {
         utils.logInfo('[PPI] Cached bids for ', destObj.adUnit.code);
       }
     });

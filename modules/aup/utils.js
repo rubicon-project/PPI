@@ -23,14 +23,6 @@ export function hashFnv32a(str, asString, seed) {
 }
 
 /**
- * // get current viewport
- * @returns {Array} viewport size [w, h]
- */
-export function getViewport() {
-  return [window.innerWidth, window.innerHeight];
-}
-
-/**
  * @param {Array} list
  * @param {function(item:*)} callback
  * @returns {*}
