@@ -1,7 +1,7 @@
 import { getGlobal } from '../../src/prebidGlobal.js';
 import * as utils from '../../src/utils.js';
 import { submodule } from '../../src/hook.js';
-import { TransactionType } from '../ppi/consts.js';
+import { TransactionType } from './consts.js';
 import { findLimitSizes, filterSizesByIntersection, isSizeValid, sortSizes, addSizeMappings } from './sizes.js';
 import { hashFnv32a, isRegex } from './utils.js';
 
@@ -10,18 +10,31 @@ export const aupInventorySubmodule = {
   name: 'AUP',
 
   createAdUnits,
+  getTransactionTypes() {
+    return Object.keys(TransactionType).map(t => TransactionType[t]);
+  }
 };
 
+// used to track if aup matching was called before setCustomMappingFunction
+let aupsMatched = false;
 export function createAdUnits(transactionObjects) {
+  aupsMatched = true;
   let result = [];
   let allTOs = [];
+
+  // transform autoslots
   transactionObjects.forEach(to => {
+    if (!isValid(to)) {
+      utils.logError('[PPI] Invalid transaction object', to.error);
+      return;
+    }
     if (to.type !== TransactionType.AUTO_SLOTS) {
       allTOs.push(to);
       return;
     }
     allTOs = allTOs.concat(transformAutoSlots(to));
   });
+
   let toAUPPair = getTOAUPPair(allTOs, adUnitPatterns);
   toAUPPair.forEach(toAUP => {
     let aup = toAUP.adUnitPattern;
@@ -43,6 +56,11 @@ export function createAdUnits(transactionObjects) {
   return result;
 }
 
+function isValid(transactionObject) {
+  // TODO: do we need any kind of hbInventory specific validation?
+  return true;
+}
+
 export function createAdUnit(adUnitPattern, transactionObject) {
   let limitSizes = findLimitSizes(adUnitPattern, transactionObject);
   let adUnit;
@@ -51,7 +69,7 @@ export function createAdUnit(adUnitPattern, transactionObject) {
     adUnit = JSON.parse(JSON.stringify(adUnitPattern));
 
     if (limitSizes && limitSizes.length) {
-      let sizes = utils.deepAccess(adUnit, 'mediaTypes.banner.sizes')
+      let sizes = utils.deepAccess(adUnit, 'mediaTypes.banner.sizes');
       if (sizes && sizes.length) {
         sizes = filterSizesByIntersection(sizes, limitSizes);
       } else {
@@ -126,21 +144,21 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
     switch (transactionObject.type) {
       case TransactionType.SLOT:
         if (aup.slotPattern) {
-          match = aup.slotPatternRegex.test(transactionObject.value);
+          match = aup.slotPatternRegex.test(transactionObject.hbInventory.values['name']);
         }
         break;
       case TransactionType.DIV:
         if (aup.divPattern) {
-          match = aup.divPatternRegex.test(transactionObject.value);
+          match = aup.divPatternRegex.test(transactionObject.hbInventory.values['name']);
         }
         break;
       case TransactionType.SLOT_OBJECT:
         match = true;
         if (aup.slotPattern) {
-          match = aup.slotPatternRegex.test(transactionObject.value.getAdUnitPath());
+          match = aup.slotPatternRegex.test(transactionObject.hbInventory.values['slot'].getAdUnitPath());
         }
         if (aup.divPattern) {
-          match = match && aup.divPatternRegex.test(transactionObject.value.getSlotElementId());
+          match = match && aup.divPatternRegex.test(transactionObject.hbInventory.values['slot'].getSlotElementId());
         }
         break;
       default:
@@ -211,16 +229,16 @@ function validateAUP(aup) {
 }
 
 function getDivId(transactionObject, adUnitPattern) {
-  if (transactionObject.hbDestination.values && transactionObject.hbDestination.values.div) {
-    return transactionObject.hbDestination.values.div;
-  }
-
-  if (transactionObject.type === TransactionType.SLOT_OBJECT) {
-    return transactionObject.value.getSlotElementId();
+  if (transactionObject.hbInventory.type === TransactionType.SLOT_OBJECT) {
+    return transactionObject.hbInventory.values['slot'].getSlotElementId();
   }
 
   if (!adUnitPattern) {
     return '';
+  }
+
+  if (transactionObject.hbInventory.type === TransactionType.DIV) {
+    return transactionObject.hbInventory.values['name'];
   }
 
   let div = adUnitPattern.divPattern;
@@ -228,17 +246,19 @@ function getDivId(transactionObject, adUnitPattern) {
 }
 
 function getSlotName(transactionObject, adUnitPattern) {
-  switch (transactionObject.type) {
+  switch (transactionObject.hbInventory.type) {
     case TransactionType.SLOT:
-      return transactionObject.value;
+      return transactionObject.hbInventory.values['name'];
     case TransactionType.DIV:
-      if (adUnitPattern && adUnitPattern.slotPattern && isRegex(adUnitPattern.slotPattern)) {
+      if (adUnitPattern && adUnitPattern.slotPattern && !isRegex(adUnitPattern.slotPattern)) {
         return adUnitPattern.slotPattern;
       }
       break;
     case TransactionType.SLOT_OBJECT:
-      return transactionObject.value.getAdUnitPath();
+      return transactionObject.hbInventory.values['slot'].getAdUnitPath();
   }
+
+  return '';
 }
 
 export function transformAutoSlots(transactionObject) {
@@ -259,12 +279,16 @@ export function transformAutoSlots(transactionObject) {
   let slotObjectTOs = [];
   gptSlots.forEach(gptSlot => {
     let slotObjectTO = {
-      type: TransactionType.SLOT_OBJECT,
-      value: gptSlot,
+      hbInventory: {
+        type: TransactionType.SLOT_OBJECT,
+        values: {
+          slot: gptSlot,
+        },
+        sizes: transactionObject.hbInventory.sizes,
+        fpd: transactionObject.hbInventory.fpd,
+      },
       hbSource: transactionObject.hbSource,
       hbDestination: transactionObject.hbDestination,
-      sizes: transactionObject.sizes,
-      targeting: transactionObject.targeting,
     };
 
     slotObjectTOs.push(slotObjectTO);
@@ -282,10 +306,9 @@ export function transformAutoSlots(transactionObject) {
  */
 let customMappingFunction;
 export function setCustomMappingFunction(mappingFunction) {
-  // TODO: instead of tracking bidsRequested (line in original draft impl), track if createAdUnit was already called
-  // if (bidsRequested) {
-  //   utils.logWarn('[PPI] calling setCustomMappingFunction after requestBids could cause ad serving discrepancies or race conditions.');
-  // }
+  if (aupsMatched) {
+    utils.logWarn('[PPI] calling setCustomMappingFunction after requestBids could cause ad serving discrepancies or race conditions.');
+  }
 
   if (!utils.isFn(mappingFunction)) {
     utils.logError('[PPI] custom mapping function must be a function', mappingFunction);

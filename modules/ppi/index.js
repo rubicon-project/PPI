@@ -1,6 +1,6 @@
 import * as utils from '../../src/utils.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
-import { TransactionType, HBSource, HBDestination, ModuleType } from './consts.js';
+import { ModuleType } from './consts.js';
 import { module } from '../../src/hook.js';
 
 /** @type {Submodule[name]->handle} */
@@ -8,13 +8,10 @@ let destinationRegistry = {};
 let sourceRegistry = {};
 let inventoryRegistry = {};
 
-// used to track if requestBids was called
-// let bidsRequested = false;
 /**
  * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
  */
 export function requestBids(transactionObjects) {
-  // bidsRequested = true;
   let validationResult = validateTransactionObjects(transactionObjects);
   let transactionResult = [];
   validationResult.invalid.forEach(inv => {
@@ -44,45 +41,29 @@ export function requestBids(transactionObjects) {
   return transactionResult;
 }
 
-export function validateTransactionObjects(transactionObjects) {
+function validateTransactionObjects(transactionObjects) {
   let valid = [];
   let invalid = [];
 
-  const validTransactionTypes = new Set(Object.keys(TransactionType).map(t => TransactionType[t]));
-  const validDestinationTypes = new Set(Object.keys(HBDestination).map(h => HBDestination[h].toLowerCase()));
+  const validTransactionTypes = new Set(inventoryRegistry.getTransactionTypes());
+  const validDestinationTypes = new Set(Object.keys(destinationRegistry));
+  const validSourceTypes = new Set(Object.keys(sourceRegistry));
 
   transactionObjects.forEach(to => {
-    // check for type
-    if (!validTransactionTypes.has(to.type)) {
-      to.error = `provided type ${to.type} not found`;
-      invalid.push(to);
-      return;
-    }
-    if (to.type !== TransactionType.AUTO_SLOTS) {
-      if (!to.value) {
-        to.error = `for type ${to.type}, value must be provided, it can't be: ${to.value}`;
-        invalid.push(to);
-        return;
-      }
-    }
-    if (to.hbSource !== HBSource.AUCTION && to.hbSource !== HBSource.CACHE) {
-      to.error = `hbSource: ${to.hbSource} is not equal to ${HBSource.AUCTION} or ${HBSource.CACHE}`;
-      invalid.push(to);
-      return;
-    }
-    if (!to.hbDestination || !to.hbDestination.type) {
-      to.error = 'hbDestionation.type not provided';
-      invalid.push(to);
-      return;
-    }
-    if (!validDestinationTypes.has(to.hbDestination.type.toLowerCase())) {
-      to.error = `destination type ${to.hbDestination.type} not supported`
+    if (!validTransactionTypes.has(to.hbInventory.type)) {
+      to.error = `provided inventory type ${to.hbInventory.type} not found`;
       invalid.push(to);
       return;
     }
 
-    if (to.hbDestination.type === HBDestination.CACHE && to.hbSource === HBSource.CACHE) {
-      to.error = `destination and source can't be cache at the same time`;
+    if (!validSourceTypes.has(to.hbSource)) {
+      to.error = `hbSource ${to.hbSource} is not registered`;
+      invalid.push(to);
+      return;
+    }
+
+    if (!validDestinationTypes.has(to.hbDestination.type)) {
+      to.error = `destination type ${to.hbDestination.type} not supported`
       invalid.push(to);
       return;
     }
@@ -98,6 +79,10 @@ export function validateTransactionObjects(transactionObjects) {
       // to cover the usual error where [[300, 250]] --> [300, 250]
       if (Array.isArray(to.sizes) && typeof (to.sizes[0]) === 'number') {
         to.sizes = [to.sizes];
+      }
+
+      let isSizeValid = (size) => {
+        return Array.isArray(size) && size.length === 2 && typeof (size[0]) === 'number' && typeof (size[1]) === 'number';
       }
 
       to.sizes = to.sizes.filter(s => {
@@ -137,10 +122,6 @@ export function groupTransactionObjects(transactionObjects) {
   return grouped;
 }
 
-function isSizeValid(size) {
-  return Array.isArray(size) && size.length === 2 && typeof (size[0]) === 'number' && typeof (size[1]) === 'number';
-}
-
 /**
  * enable submodule in PPI
  * @param {Submodule} submodule
@@ -161,8 +142,6 @@ export function attachSubmodule(submodule) {
       break;
   }
 }
-
-export const adUnitPatterns = [];
 
 (getGlobal()).ppi = (getGlobal()).ppi || {};
 (getGlobal()).ppi.requestBids = requestBids;
