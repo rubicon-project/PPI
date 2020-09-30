@@ -16,6 +16,10 @@ export const cacheSourceSubmodule = {
     // TODO: Tech Spec states that we should trigger new auction if cache is emtpy
     callback();
   },
+
+  isValid(transactionObject) {
+    return utils.deepAccess(transactionObject, 'hbDestination.type') !== 'cache';
+  }
 };
 
 submodule('ppi', cacheSourceSubmodule);

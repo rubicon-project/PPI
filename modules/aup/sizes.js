@@ -1,5 +1,5 @@
 import * as utils from '../../src/utils.js';
-import { TransactionType } from '../ppi/consts.js';
+import { TransactionType } from './consts.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
 import { isRegex } from './utils.js';
 
@@ -17,17 +17,18 @@ export function addSizeMappings(sizeMappings) {
 export function findLimitSizes(aup, transactionObject) {
   let divId = utils.deepAccess(transactionObject, 'hbDestination.values.div');
   let gptSizes;
-  switch (transactionObject.type) {
+  switch (transactionObject.hbInventory.type) {
     case TransactionType.SLOT:
     case TransactionType.DIV:
       divId = divId || aup.divPattern;
       break;
     case TransactionType.SLOT_OBJECT:
-      divId = divId || transactionObject.value.getSlotElementId();
-      gptSizes = getGptSlotSizes(transactionObject.value);
+      let slot = transactionObject.hbInventory.values.slot;
+      divId = divId || slot.getSlotElementId();
+      gptSizes = getGptSlotSizes(slot);
       break;
     default:
-      utils.logError('[PPI] Invalid transaction object type', transactionObject.type);
+      utils.logError('[PPI] Invalid transaction object type', transactionObject.hbInventory.type);
       return;
   }
 

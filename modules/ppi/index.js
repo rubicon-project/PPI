@@ -41,7 +41,7 @@ export function requestBids(transactionObjects) {
   return transactionResult;
 }
 
-function validateTransactionObjects(transactionObjects) {
+export function validateTransactionObjects(transactionObjects) {
   let valid = [];
   let invalid = [];
 
@@ -64,6 +64,18 @@ function validateTransactionObjects(transactionObjects) {
 
     if (!validDestinationTypes.has(to.hbDestination.type)) {
       to.error = `destination type ${to.hbDestination.type} not supported`
+      invalid.push(to);
+      return;
+    }
+
+    if (!inventoryRegistry.isValid(to)) {
+      to.error = 'transaction object does not have valid inventory properties';
+      invalid.push(to);
+      return;
+    }
+
+    if (!sourceRegistry[to.hbSource].isValid(to)) {
+      to.error = 'transaction object does not have valid source-destination pair';
       invalid.push(to);
       return;
     }

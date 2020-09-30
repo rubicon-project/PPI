@@ -10,6 +10,7 @@ export const aupInventorySubmodule = {
   name: 'AUP',
 
   createAdUnits,
+  isValid,
   getTransactionTypes() {
     return Object.keys(TransactionType).map(t => TransactionType[t]);
   }
@@ -24,10 +25,6 @@ export function createAdUnits(transactionObjects) {
 
   // transform autoslots
   transactionObjects.forEach(to => {
-    if (!isValid(to)) {
-      utils.logError('[PPI] Invalid transaction object', to.error);
-      return;
-    }
     if (to.type !== TransactionType.AUTO_SLOTS) {
       allTOs.push(to);
       return;
@@ -56,8 +53,14 @@ export function createAdUnits(transactionObjects) {
   return result;
 }
 
-function isValid(transactionObject) {
-  // TODO: do we need any kind of hbInventory specific validation?
+export function isValid(transactionObject) {
+  switch (transactionObject.hbInventory.type) {
+    case TransactionType.SLOT:
+    case TransactionType.DIV:
+      return utils.isStr(utils.deepAccess(transactionObject, 'hbInventory.values.name'));
+    case TransactionType.SLOT_OBJECT:
+      return utils.isPlainObject(utils.deepAccess(transactionObject, 'hbInventory.values.slot'));
+  }
   return true;
 }
 
@@ -141,24 +144,24 @@ export function getTOAUPPair(transactionObjects, adUnitPatterns) {
 function findMatchingAUPs(transactionObject, adUnitPatterns) {
   return adUnitPatterns.filter(aup => {
     let match = false;
-    switch (transactionObject.type) {
+    switch (transactionObject.hbInventory.type) {
       case TransactionType.SLOT:
         if (aup.slotPattern) {
-          match = aup.slotPatternRegex.test(transactionObject.hbInventory.values['name']);
+          match = aup.slotPatternRegex.test(transactionObject.hbInventory.values.name);
         }
         break;
       case TransactionType.DIV:
         if (aup.divPattern) {
-          match = aup.divPatternRegex.test(transactionObject.hbInventory.values['name']);
+          match = aup.divPatternRegex.test(transactionObject.hbInventory.values.name);
         }
         break;
       case TransactionType.SLOT_OBJECT:
         match = true;
         if (aup.slotPattern) {
-          match = aup.slotPatternRegex.test(transactionObject.hbInventory.values['slot'].getAdUnitPath());
+          match = aup.slotPatternRegex.test(transactionObject.hbInventory.values.slot.getAdUnitPath());
         }
         if (aup.divPattern) {
-          match = match && aup.divPatternRegex.test(transactionObject.hbInventory.values['slot'].getSlotElementId());
+          match = match && aup.divPatternRegex.test(transactionObject.hbInventory.values.slot.getSlotElementId());
         }
         break;
       default:
@@ -284,7 +287,6 @@ export function transformAutoSlots(transactionObject) {
         values: {
           slot: gptSlot,
         },
-        sizes: transactionObject.hbInventory.sizes,
         fpd: transactionObject.hbInventory.fpd,
       },
       hbSource: transactionObject.hbSource,
