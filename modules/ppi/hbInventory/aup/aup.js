@@ -23,7 +23,7 @@ export function createAdUnits(transactionObjects) {
 
   // transform autoslots
   transactionObjects.forEach(to => {
-    if (to.type !== TransactionType.AUTO_SLOTS) {
+    if (to.hbInventory.type !== TransactionType.AUTO_SLOTS) {
       allTOs.push(to);
       return;
     }
@@ -228,8 +228,12 @@ function validateAUP(aup) {
 }
 
 function getDivId(transactionObject, adUnitPattern) {
+  if (transactionObject.hbDestination.values && transactionObject.hbDestination.values.div) {
+    return transactionObject.hbDestination.values.div;
+  }
+
   if (transactionObject.hbInventory.type === TransactionType.SLOT_OBJECT) {
-    return transactionObject.hbInventory.values['slot'].getSlotElementId();
+    return transactionObject.hbInventory.values.getSlotElementId();
   }
 
   if (!adUnitPattern) {
@@ -237,7 +241,7 @@ function getDivId(transactionObject, adUnitPattern) {
   }
 
   if (transactionObject.hbInventory.type === TransactionType.DIV) {
-    return transactionObject.hbInventory.values['name'];
+    return transactionObject.hbInventory.values.name;
   }
 
   let div = adUnitPattern.divPattern;
@@ -247,14 +251,14 @@ function getDivId(transactionObject, adUnitPattern) {
 function getSlotName(transactionObject, adUnitPattern) {
   switch (transactionObject.hbInventory.type) {
     case TransactionType.SLOT:
-      return transactionObject.hbInventory.values['name'];
+      return transactionObject.hbInventory.values.name;
     case TransactionType.DIV:
       if (adUnitPattern && adUnitPattern.slotPattern && !isRegex(adUnitPattern.slotPattern)) {
         return adUnitPattern.slotPattern;
       }
       break;
     case TransactionType.SLOT_OBJECT:
-      return transactionObject.hbInventory.values['slot'].getAdUnitPath();
+      return transactionObject.hbInventory.values.slot.getAdUnitPath();
   }
 
   return '';

@@ -76,7 +76,6 @@
                             bidder: 'appnexus',
                             params: {
                                 placementId: 13144370,
-                                keywords: "##data.keywords##"
                             },
                         },
                         {
@@ -85,7 +84,6 @@
                                 accountId: '1001',
                                 siteId: '113932',
                                 zoneId: '535510',
-                                visitor: "##data.visitor##"
                             }
                         }],
                     mediaTypes: {
@@ -101,7 +99,6 @@
                             bidder: 'appnexus',
                             params: {
                                 placementId: 13144370,
-                                keywords: "##data.keywords##"
                             },
                         },
                         {
@@ -110,7 +107,6 @@
                                 accountId: '1001',
                                 siteId: '113932',
                                 zoneId: '535510',
-                                visitor: "##data.visitor##"
                             }
                         }],
                     mediaTypes: {
@@ -128,26 +124,25 @@
         window.pbjs.que.push(() => {
             window.transactionObjects = [
                 {
-                    value: '/19968336/header-bid-tag-0',
-                    type: 'slot',
-                    hbSource: 'auction',
-                    targeting: {
-                        keywords: {
-                            permutive: ["11198", "29607", "21090", "13914", "13932", "14920", "15684", "15685", "15691", "15692", "15693", "15697", "15699", "17291", "18038", "18070", "18388", "18393", "18394", "20339", "20440", "21571", "21690", "21847", "42076", "46420", "38054", "14563", "13896", "14559", "46904", "15470", "17206", "13950", "23547", "13896--1005884501", "13914--1005884301", "13932--1005884281", "14559-4-4823588", "14563-4-4823529", "14920-15-22872", "15684-15-22854", "15685-15-22814", "15691-15-22840", "15692-15-22871", "15693-15-22819", "15697-15-22809", "15699-15-22872", "17291-15-22820", "18038-15-22816", "18070-15-22873", "18388-15-22963", "18393-15-22851", "18394-15-22853", "20339-15-23033", "20440-15-23011", "21571-15-22820", "21690-15-22866", "21847-15-22884", "22044-15-22969", "31240-15-22969", "46420-15-23050", "46904-4-4823588"]
+                    hbInventory: {
+                        type: 'AUPSlotName',
+                        values: {
+                            name: '/19968336/header-bid-tag-0',
                         },
-                        visitor: {
-                            permutive: ["11198", "29607", "21090", "13914", "13932", "14920", "15684", "15685", "15691", "15692", "15693", "15697", "15699", "17291", "18038", "18070", "18388", "18393", "18394", "20339", "20440", "21571", "21690", "21847", "42076", "46420", "38054", "14563", "13896", "14559", "46904", "15470", "17206", "13950", "23547", "13896--1005884501", "13914--1005884301", "13932--1005884281", "14559-4-4823588", "14563-4-4823529", "14920-15-22872", "15684-15-22854", "15685-15-22814", "15691-15-22840", "15692-15-22871", "15693-15-22819", "15697-15-22809", "15699-15-22872", "17291-15-22820", "18038-15-22816", "18070-15-22873", "18388-15-22963", "18393-15-22851", "18394-15-22853", "20339-15-23033", "20440-15-23011", "21571-15-22820", "21690-15-22866", "21847-15-22884", "22044-15-22969", "31240-15-22969", "46420-15-23050", "46904-4-4823588"]
-                        }
-
                     },
+                    hbSource: 'auction',
                     hbDestination: {
                         type: 'gpt',
                         values: { div: 'test-1' }
                     }
                 },
                 {
-                    value: 'test-2',
-                    type: 'div',
+                    hbInventory: {
+                        type: 'AUPDivID',
+                        values: {
+                            name: 'test-2',
+                        },
+                    },
                     hbSource: 'auction',
                     hbDestination: {
                         type: 'gpt',
@@ -230,31 +225,41 @@
     <script>
         window.transactionToCache = [
             {
-                value: '/19968336/header-bid-tag-0',
-                type: 'slot',
+                hbInventory: {
+                    type: 'AUPSlotName',
+                    values: {
+                        name: '/19968336/header-bid-tag-0',
+                    },
+                },
                 hbSource: 'auction',
                 sizes: [[300, 250]],
                 hbDestination: {
                     type: 'cache',
-                    // values: { div: 'test-1' }
                 }
             },
             {
-                value: 'test-4',
-                type: 'div',
+                hbInventory: {
+                    type: 'AUPDivID',
+                    values: {
+                        name: 'test-4',
+                    },
+                },
                 hbSource: 'auction',
                 sizes: [[300, 250]],
                 hbDestination: {
                     type: 'cache',
-                    // values: { div: 'test-4' }
                 }
             },
         ];
 
         window.transactionFromCache = [
             {
-                value: '/19968336/header-bid-tag-0',
-                type: 'slot',
+                hbInventory: {
+                    type: 'AUPSlotName',
+                    values: {
+                        name: '/19968336/header-bid-tag-0',
+                    },
+                },
                 hbSource: 'cache',
                 sizes: [[300, 600]],
                 hbDestination: {
@@ -263,8 +268,12 @@
                 }
             },
             {
-                value: 'test-4',
-                type: 'div',
+                hbInventory: {
+                    type: 'AUPDivID',
+                    values: {
+                        name: 'test-4',
+                    },
+                },
                 hbSource: 'cache',
                 sizes: [[300, 600]],
                 hbDestination: {
@@ -276,7 +285,9 @@
 
         window.autoSlots = [
             {
-                type: 'autoSlots',
+                hbInventory: {
+                    type: 'AUPAutoSlots',
+                },
                 hbSource: 'auction',
                 hbDestination: {
                     type: 'gpt',
