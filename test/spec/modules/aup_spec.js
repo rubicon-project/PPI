@@ -433,9 +433,9 @@ describe('add adUnitPattern', () => {
           type: TransactionType.SLOT,
           values: {
             name: '/19968336/header-bid-tag-0',
-          }
+          },
+          sizes: sizes,
         },
-        sizes: sizes,
       };
 
       let adUnit = aup.createAdUnit(adUnitPattern, to);
@@ -452,12 +452,12 @@ describe('add adUnitPattern', () => {
 
       // now add sizes to aup
       utils.deepSetValue(adUnitPattern, 'mediaTypes.banner.sizes', sizes);
-      to.sizes = [];
+      to.hbInventory.sizes = [];
       adUnit = aup.createAdUnit(adUnitPattern, to);
       expect(adUnit.mediaTypes.banner.sizes).to.deep.equal(sizes);
 
       // now do the size intersection between adUnitPattern sizes and limit sizes
-      to.sizes = [[2, 2], [1, 1], [3, 3], [4, 4]];
+      to.hbInventory.sizes = [[2, 2], [1, 1], [3, 3], [4, 4]];
       adUnit = aup.createAdUnit(adUnitPattern, to);
       expect(adUnit.mediaTypes.banner.sizes).to.deep.equal([[2, 2], [1, 1]]);
     });

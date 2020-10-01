@@ -36,8 +36,8 @@ export function findLimitSizes(aup, transactionObject) {
   let limitSizes;
   switch (true) {
     // added & transactionObject.sizes.length in case there are pubs passing []
-    case !!(transactionObject.sizes && transactionObject.sizes.length):
-      limitSizes = transactionObject.sizes;
+    case !!(transactionObject.hbInventory.sizes && transactionObject.hbInventory.sizes.length):
+      limitSizes = transactionObject.hbInventory.sizes;
       break;
     // undefined means no size mapping found, while [] means there is "empty" size mapping
     case !!sizeMappingSizes:
