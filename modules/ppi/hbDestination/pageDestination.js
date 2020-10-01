@@ -1,10 +1,8 @@
-import { getGlobal } from '../src/prebidGlobal.js';
-import * as utils from '../src/utils.js';
-import { submodule } from '../src/hook.js';
+import { getGlobal } from '../../../src/prebidGlobal.js';
+import * as utils from '../../../src/utils.js';
 
 /** @type {Submodule} */
 export const pageDestinationSubmodule = {
-  type: 'hbDestination',
   name: 'page',
 
   send(destinationObjects) {
@@ -40,5 +38,3 @@ export const pageDestinationSubmodule = {
     });
   },
 };
-
-submodule('ppi', pageDestinationSubmodule);

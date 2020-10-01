@@ -1,9 +1,7 @@
-import * as utils from '../src/utils.js';
-import { submodule } from '../src/hook.js';
+import * as utils from '../../../src/utils.js';
 
 /** @type {Submodule} */
 export const cacheDestinationSubmodule = {
-  type: 'hbDestination',
   name: 'cache',
 
   send(destinationObjects) {
@@ -14,5 +12,3 @@ export const cacheDestinationSubmodule = {
     });
   },
 };
-
-submodule('ppi', cacheDestinationSubmodule);

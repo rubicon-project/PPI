@@ -1,11 +1,9 @@
-import { getGlobal } from '../src/prebidGlobal.js';
-import * as utils from '../src/utils.js';
-import { filters } from '../src/targeting.js';
-import { submodule } from '../src/hook.js';
+import { getGlobal } from '../../../src/prebidGlobal.js';
+import * as utils from '../../../src/utils.js';
+import { filters } from '../../../src/targeting.js';
 
 /** @type {Submodule} */
 export const callbackDestinationSubmodule = {
-  type: 'hbDestination',
   name: 'callback',
 
   send(destinationObjects) {
@@ -30,5 +28,3 @@ export const callbackDestinationSubmodule = {
     });
   },
 };
-
-submodule('ppi', callbackDestinationSubmodule);

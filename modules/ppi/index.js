@@ -1,12 +1,13 @@
 import * as utils from '../../src/utils.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
-import { ModuleType } from './consts.js';
-import { module } from '../../src/hook.js';
+import { hbSource } from './hbSource/hbSource.js';
+import { hbDestination } from './hbDestination/hbDestination.js';
+import { hbInventory } from './hbInventory/hbInventory.js';
 
 /** @type {Submodule[name]->handle} */
-let destinationRegistry = {};
-let sourceRegistry = {};
-let inventoryRegistry = {};
+let destinationRegistry = hbDestination;
+let sourceRegistry = hbSource;
+let inventoryRegistry = hbInventory;
 
 /**
  * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
@@ -134,28 +135,5 @@ export function groupTransactionObjects(transactionObjects) {
   return grouped;
 }
 
-/**
- * enable submodule in PPI
- * @param {Submodule} submodule
- */
-export function attachSubmodule(submodule) {
-  switch (submodule.type) {
-    case ModuleType.HBInventory:
-      inventoryRegistry = submodule;
-      break;
-    case ModuleType.HBSource:
-      sourceRegistry[submodule.name] = submodule;
-      break;
-    case ModuleType.HBDestination:
-      destinationRegistry[submodule.name] = submodule;
-      break;
-    default:
-      utils.logError('[PPI] Invalid submodule type', submodule.type);
-      break;
-  }
-}
-
 (getGlobal()).ppi = (getGlobal()).ppi || {};
 (getGlobal()).ppi.requestBids = requestBids;
-
-module('ppi', attachSubmodule);

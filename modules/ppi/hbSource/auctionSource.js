@@ -1,10 +1,8 @@
-import * as utils from '../src/utils.js';
-import { submodule } from '../src/hook.js';
-import { getGlobal } from '../src/prebidGlobal.js';
+import * as utils from '../../../src/utils.js';
+import { getGlobal } from '../../../src/prebidGlobal.js';
 
 /** @type {Submodule} */
 export const auctionSourceSubmodule = {
-  type: 'hbSource',
   name: 'auction',
 
   send,
@@ -24,5 +22,3 @@ export function send(destinationObjects, callback) {
     }
   });
 }
-
-submodule('ppi', auctionSourceSubmodule);

@@ -1,9 +1,7 @@
-import * as utils from '../src/utils.js';
-import { submodule } from '../src/hook.js';
+import * as utils from '../../../src/utils.js';
 
 /** @type {Submodule} */
 export const cacheSourceSubmodule = {
-  type: 'hbSource',
   name: 'cache',
 
   send(destinationObjects, callback) {
@@ -21,5 +19,3 @@ export const cacheSourceSubmodule = {
     return utils.deepAccess(transactionObject, 'hbDestination.type') !== 'cache';
   }
 };
-
-submodule('ppi', cacheSourceSubmodule);

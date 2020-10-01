@@ -1,13 +1,11 @@
-import { getGlobal } from '../src/prebidGlobal.js';
-import * as utils from '../src/utils.js';
-import { submodule } from '../src/hook.js';
+import { getGlobal } from '../../../src/prebidGlobal.js';
+import * as utils from '../../../src/utils.js';
 
 window.googletag = window.googletag || {};
 window.googletag.cmd = window.googletag.cmd || [];
 
 /** @type {Submodule} */
 export const gptDestinationSubmodule = {
-  type: 'hbDestination',
   name: 'gpt',
 
   send(destinationObjects) {
@@ -128,5 +126,3 @@ function setTargeting(adUnitCodes, mappings) {
     }
   });
 }
-
-submodule('ppi', gptDestinationSubmodule);

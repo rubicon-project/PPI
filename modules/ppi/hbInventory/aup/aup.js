@@ -1,12 +1,10 @@
-import { getGlobal } from '../../src/prebidGlobal.js';
-import * as utils from '../../src/utils.js';
-import { submodule } from '../../src/hook.js';
+import { getGlobal } from '../../../../src/prebidGlobal.js';
+import * as utils from '../../../../src/utils.js';
 import { TransactionType } from './consts.js';
 import { findLimitSizes, filterSizesByIntersection, isSizeValid, sortSizes, addSizeMappings, findAUPSizes } from './sizes.js';
 import { hashFnv32a, isRegex } from './utils.js';
 
 export const aupInventorySubmodule = {
-  type: 'hbInventory',
   name: 'AUP',
 
   createAdUnits,
@@ -344,5 +342,3 @@ export function addAdUnitPatterns(aups) {
 (getGlobal()).ppi.addAdUnitPatterns = addAdUnitPatterns;
 (getGlobal()).ppi.setCustomMappingFunction = setCustomMappingFunction;
 (getGlobal()).ppi.addSizeMappings = addSizeMappings;
-
-submodule('ppi', aupInventorySubmodule);

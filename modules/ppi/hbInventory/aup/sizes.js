@@ -1,6 +1,6 @@
-import * as utils from '../../src/utils.js';
+import * as utils from '../../../../src/utils.js';
 import { TransactionType } from './consts.js';
-import { getGlobal } from '../../src/prebidGlobal.js';
+import { getGlobal } from '../../../../src/prebidGlobal.js';
 
 export function addSizeMappings(sizeMappings) {
   sizeMappings = sizeMappings || {};

@@ -1,11 +1,8 @@
 import { expect } from 'chai';
 import * as utils from 'src/utils.js';
 import * as ppi from 'modules/ppi/index.js'
-import { TransactionType } from 'modules/aup/consts.js'
+import { TransactionType } from 'modules/ppi/hbInventory/aup/consts.js'
 import { makeSlot } from '../integration/faker/googletag.js';
-import * as gptDest from 'modules/gptDestination.js';
-import * as cacheDest from 'modules/cacheDestination.js';
-import * as cacheSrc from 'modules/cacheSource.js';
 
 function makeGPTSlot(adUnitPath, divId, sizes = []) {
   let gptSlot = makeSlot({ code: adUnitPath, divId: divId });

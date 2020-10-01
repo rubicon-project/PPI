@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as utils from 'src/utils.js';
-import * as aup from 'modules/aup/index.js'
-import { TransactionType } from 'modules/aup/consts.js'
+import * as aup from 'modules/ppi/hbInventory/aup/aup.js'
+import { TransactionType } from 'modules/ppi/hbInventory/aup/consts.js'
 import { makeSlot } from '../integration/faker/googletag.js';
 
 function makeGPTSlot(adUnitPath, divId, sizes = []) {
