@@ -65,7 +65,7 @@ export function isValid(transactionObject) {
 }
 
 export function createAdUnit(adUnitPattern, transactionObject) {
-  let limitSizes = findLimitSizes(adUnitPattern, transactionObject);
+  let limitSizes = findLimitSizes(transactionObject);
   let aupSizes = findAUPSizes(adUnitPattern);
   let adUnit;
   try {
