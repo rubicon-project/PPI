@@ -2,7 +2,7 @@ import { getGlobal } from '../../src/prebidGlobal.js';
 import * as utils from '../../src/utils.js';
 import { submodule } from '../../src/hook.js';
 import { TransactionType } from './consts.js';
-import { findLimitSizes, filterSizesByIntersection, isSizeValid, sortSizes, addSizeMappings } from './sizes.js';
+import { findLimitSizes, filterSizesByIntersection, isSizeValid, sortSizes, addSizeMappings, findAUPSizes } from './sizes.js';
 import { hashFnv32a, isRegex } from './utils.js';
 
 export const aupInventorySubmodule = {
@@ -66,21 +66,20 @@ export function isValid(transactionObject) {
 
 export function createAdUnit(adUnitPattern, transactionObject) {
   let limitSizes = findLimitSizes(adUnitPattern, transactionObject);
+  let aupSizes = findAUPSizes(adUnitPattern);
   let adUnit;
   try {
     // copy pattern for conversion into adUnit
     adUnit = JSON.parse(JSON.stringify(adUnitPattern));
 
     if (limitSizes && limitSizes.length) {
-      let sizes = utils.deepAccess(adUnit, 'mediaTypes.banner.sizes');
-      if (sizes && sizes.length) {
-        sizes = filterSizesByIntersection(sizes, limitSizes);
+      if (aupSizes && aupSizes.length) {
+        aupSizes = filterSizesByIntersection(aupSizes, limitSizes);
       } else {
-        sizes = limitSizes;
+        aupSizes = limitSizes;
       }
-
-      utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(sizes));
     }
+    utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(aupSizes));
 
     // if aup code was not published, generate one
     if (!adUnit.code) {
@@ -174,9 +173,8 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
       return false;
     }
 
-    let limitSizes = findLimitSizes(aup, transactionObject);
-    // check if sizes are matching
-    let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
+    let limitSizes = findLimitSizes(transactionObject);
+    let aupSizes = findAUPSizes(aup);
     // empty limitSizes ([]) means you want to exclude sizes and skip this aup
     if (!limitSizes || !aupSizes || !aupSizes.length) {
       match = true;

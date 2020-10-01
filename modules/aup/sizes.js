@@ -1,7 +1,6 @@
 import * as utils from '../../src/utils.js';
 import { TransactionType } from './consts.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
-import { isRegex } from './utils.js';
 
 export function addSizeMappings(sizeMappings) {
   sizeMappings = sizeMappings || {};
@@ -14,41 +13,24 @@ export function addSizeMappings(sizeMappings) {
   }
 }
 
-export function findLimitSizes(aup, transactionObject) {
-  let divId = utils.deepAccess(transactionObject, 'hbDestination.values.div');
-  let gptSizes;
-  switch (transactionObject.hbInventory.type) {
-    case TransactionType.SLOT:
-    case TransactionType.DIV:
-      divId = divId || aup.divPattern;
-      break;
-    case TransactionType.SLOT_OBJECT:
-      let slot = transactionObject.hbInventory.values.slot;
-      divId = divId || slot.getSlotElementId();
-      gptSizes = getGptSlotSizes(slot);
-      break;
-    default:
-      utils.logError('[PPI] Invalid transaction object type', transactionObject.hbInventory.type);
-      return;
+export function findAUPSizes(aup) {
+  let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
+  let respSizes = utils.deepAccess(aup, 'mediaTypes.banner.responsiveSizes');
+  if (respSizes && respSizes.length) {
+    let vpSizes = filterSizeMappingSizes(respSizes, getViewport());
+    return filterSizesByIntersection(vpSizes, aupSizes)
   }
 
-  let sizeMappingSizes = getSizeMappingSizes(divId, getViewport());
-  let limitSizes;
-  switch (true) {
-    // added & transactionObject.sizes.length in case there are pubs passing []
-    case !!(transactionObject.hbInventory.sizes && transactionObject.hbInventory.sizes.length):
-      limitSizes = transactionObject.hbInventory.sizes;
-      break;
-    // undefined means no size mapping found, while [] means there is "empty" size mapping
-    case !!sizeMappingSizes:
-      limitSizes = sizeMappingSizes;
-      break;
-    case !!gptSizes:
-      limitSizes = gptSizes;
-      break;
+  return aupSizes;
+}
+
+export function findLimitSizes(transactionObject) {
+  if (transactionObject.hbInventory.type === TransactionType.SLOT_OBJECT) {
+    // TODO: if transactionObject.hbInventory.sizes is defined, log that this is not supported
+    return getGptSlotSizes(transactionObject.hbInventory.values.slot);
   }
 
-  return limitSizes;
+  return transactionObject.hbInventory.sizes;
 }
 
 /**
@@ -58,7 +40,8 @@ export function findLimitSizes(aup, transactionObject) {
  * @returns {Array} - gpt slot sizes array formatted [[w,h],...]
  */
 function getGptSlotSizes(gptSlot) {
-  let gptSlotSizes = gptSlot.getSizes();
+  let viewport = getViewport();
+  let gptSlotSizes = gptSlot.getSizes(viewport[0], viewport[1]);
   // if no sizes array, just return undefined (not sure if this is valid, but being defensive)
   if (!gptSlotSizes) {
     return;
@@ -77,20 +60,6 @@ function getGptSlotSizes(gptSlot) {
       gptSlotSize.getHeight()
     ];
   });
-}
-
-function getSizeMappingSizes(divId, viewport) {
-  let sizeMappings = getGlobal().ppi.sizeMappings;
-  if (!sizeMappings) {
-    return;
-  }
-
-  if (isRegex(divId)) {
-    divId = '__global__';
-  }
-
-  let divSizeMappings = sizeMappings[divId] || sizeMappings['__global__'];
-  return filterSizeMappingSizes(divSizeMappings, viewport);
 }
 
 /**
