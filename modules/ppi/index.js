@@ -82,23 +82,24 @@ export function validateTransactionObjects(transactionObjects) {
     }
 
     // validate sizes
-    if (to.sizes) {
-      if (!Array.isArray(to.sizes)) {
+    if (to.hbInventory.sizes) {
+      if (!Array.isArray(to.hbInventory.sizes)) {
         to.error = 'sizes should be an array';
         invalid.push(to);
         return;
       }
 
       // to cover the usual error where [[300, 250]] --> [300, 250]
-      if (Array.isArray(to.sizes) && typeof (to.sizes[0]) === 'number') {
-        to.sizes = [to.sizes];
+      if (Array.isArray(to.hbInventory.sizes) && typeof (to.hbInventory.sizes[0]) === 'number') {
+        to.hbInventory.sizes = [to.hbInventory.sizes];
       }
 
       let isSizeValid = (size) => {
-        return Array.isArray(size) && size.length === 2 && typeof (size[0]) === 'number' && typeof (size[1]) === 'number';
+        return (Array.isArray(size) && size.length === 2 && typeof (size[0]) === 'number' && typeof (size[1]) === 'number') ||
+          size === 'fluid';
       }
 
-      to.sizes = to.sizes.filter(s => {
+      to.hbInventory.sizes = to.hbInventory.sizes.filter(s => {
         if (!isSizeValid(s)) {
           utils.logError('[PPI] Invalid size', s);
           return false;

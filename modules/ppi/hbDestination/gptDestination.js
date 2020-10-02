@@ -15,7 +15,8 @@ export const gptDestinationSubmodule = {
       let adUnitCodes = [];
       let mappings = {};
       destinationObjects.forEach(destObj => {
-        let divId = destObj.transactionObject.divId;
+        destObj.transactionObject.hbDestination.values = destObj.transactionObject.hbDestination.values || {};
+        let divId = destObj.transactionObject.hbDestination.values.div || destObj.transactionObject.divId;
         if (!divId) {
           utils.logError('[PPI] GPT Destination Module: unable to find target div id for transaction object: ', destObj.transactionObject);
           return;
@@ -44,6 +45,8 @@ export const gptDestinationSubmodule = {
         if (!gptSlot) {
           return;
         }
+
+        setCustomTargeting(gptSlot, destObj.transactionObject.hbDestination.values.targeting);
 
         gptSlotsToRefresh.push(gptSlot);
         if (!destObj.adUnit) {
@@ -125,4 +128,18 @@ function setTargeting(adUnitCodes, mappings) {
       return mappings[adUnitCode] === id;
     }
   });
+}
+
+function setCustomTargeting(gptSlot, targeting) {
+  if (!targeting || !gptSlot) {
+    return;
+  }
+
+  for (let key in targeting) {
+    if (!targeting.hasOwnProperty(key)) {
+      continue;
+    }
+
+    gptSlot.setTargeting(key, targeting[key]);
+  }
 }

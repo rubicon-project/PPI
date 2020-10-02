@@ -1,24 +1,12 @@
 import * as utils from '../../../../src/utils.js';
 import { TransactionType } from './consts.js';
-import { getGlobal } from '../../../../src/prebidGlobal.js';
-
-export function addSizeMappings(sizeMappings) {
-  sizeMappings = sizeMappings || {};
-  let pbjs = getGlobal();
-  pbjs.ppi.sizeMappings = pbjs.ppi.sizeMappings || {};
-  for (var slotId in sizeMappings) {
-    if (sizeMappings.hasOwnProperty(slotId)) {
-      pbjs.ppi.sizeMappings[slotId] = sizeMappings[slotId];
-    }
-  }
-}
 
 export function findAUPSizes(aup) {
   let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
   let respSizes = utils.deepAccess(aup, 'mediaTypes.banner.responsiveSizes');
   if (respSizes && respSizes.length) {
     let vpSizes = filterSizeMappingSizes(respSizes, getViewport());
-    return filterSizesByIntersection(vpSizes, aupSizes)
+    return filterSizesByIntersection(vpSizes, aupSizes);
   }
 
   return aupSizes;

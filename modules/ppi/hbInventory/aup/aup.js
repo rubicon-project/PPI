@@ -1,7 +1,7 @@
 import { getGlobal } from '../../../../src/prebidGlobal.js';
 import * as utils from '../../../../src/utils.js';
 import { TransactionType } from './consts.js';
-import { findLimitSizes, filterSizesByIntersection, isSizeValid, sortSizes, addSizeMappings, findAUPSizes } from './sizes.js';
+import { findLimitSizes, filterSizesByIntersection, isSizeValid, sortSizes, findAUPSizes } from './sizes.js';
 import { hashFnv32a, isRegex } from './utils.js';
 
 export const aupInventorySubmodule = {
@@ -30,13 +30,14 @@ export function createAdUnits(transactionObjects) {
     allTOs = allTOs.concat(transformAutoSlots(to));
   });
 
-  let toAUPPair = getTOAUPPair(allTOs, adUnitPatterns);
+  let toAUPPair = matchAUPs(allTOs, adUnitPatterns);
   toAUPPair.forEach(toAUP => {
     let aup = toAUP.adUnitPattern;
     let to = toAUP.transactionObject;
     let au;
     if (aup) {
       au = createAdUnit(aup, to);
+      applyFirstPartyData(au, aup, to);
     }
 
     to.divId = getDivId(to, aup);
@@ -55,6 +56,7 @@ export function isValid(transactionObject) {
   switch (transactionObject.hbInventory.type) {
     case TransactionType.SLOT:
     case TransactionType.DIV:
+      // TODO: maybe also check && !isRegex()
       return utils.isStr(utils.deepAccess(transactionObject, 'hbInventory.values.name'));
     case TransactionType.SLOT_OBJECT:
       return utils.isPlainObject(utils.deepAccess(transactionObject, 'hbInventory.values.slot'));
@@ -63,6 +65,7 @@ export function isValid(transactionObject) {
 }
 
 export function createAdUnit(adUnitPattern, transactionObject) {
+  // TODO: will it hurt PBJS if 'fluid' gets into ad unit MTO sizes?
   let limitSizes = findLimitSizes(transactionObject);
   let aupSizes = findAUPSizes(adUnitPattern);
   let adUnit;
@@ -71,10 +74,13 @@ export function createAdUnit(adUnitPattern, transactionObject) {
     adUnit = JSON.parse(JSON.stringify(adUnitPattern));
 
     if (limitSizes && limitSizes.length) {
-      if (aupSizes && aupSizes.length) {
-        aupSizes = filterSizesByIntersection(aupSizes, limitSizes);
-      } else {
+      if (!aupSizes || !aupSizes.length ||
+        transactionObject.hbInventory.type === TransactionType.SLOT ||
+        transactionObject.hbInventory.type === TransactionType.DIV) {
+        // this is the size override
         aupSizes = limitSizes;
+      } else {
+        aupSizes = filterSizesByIntersection(aupSizes, limitSizes);
       }
     }
     utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(aupSizes));
@@ -102,12 +108,12 @@ export function createAdUnit(adUnitPattern, transactionObject) {
   return adUnit;
 }
 
-export function getTOAUPPair(transactionObjects, adUnitPatterns) {
+export function matchAUPs(transactionObjects, adUnitPatterns) {
   let result = [];
   let lock = new Set();
   transactionObjects.forEach(to => {
     let aups = findMatchingAUPs(to, adUnitPatterns).filter(a => {
-      let isLocked = lock.has(a)
+      let isLocked = lock.has(a);
       if (isLocked) {
         utils.logWarn('[PPI] aup was already matched for one of the previous transaction object, will skip it. AUP: ', a);
       }
@@ -173,7 +179,6 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
 
     let limitSizes = findLimitSizes(transactionObject);
     let aupSizes = findAUPSizes(aup);
-    // empty limitSizes ([]) means you want to exclude sizes and skip this aup
     if (!limitSizes || !aupSizes || !aupSizes.length) {
       match = true;
     } else {
@@ -228,12 +233,8 @@ function validateAUP(aup) {
 }
 
 function getDivId(transactionObject, adUnitPattern) {
-  if (transactionObject.hbDestination.values && transactionObject.hbDestination.values.div) {
-    return transactionObject.hbDestination.values.div;
-  }
-
   if (transactionObject.hbInventory.type === TransactionType.SLOT_OBJECT) {
-    return transactionObject.hbInventory.values.getSlotElementId();
+    return transactionObject.hbInventory.values.slot.getSlotElementId();
   }
 
   if (!adUnitPattern) {
@@ -262,6 +263,23 @@ function getSlotName(transactionObject, adUnitPattern) {
   }
 
   return '';
+}
+
+export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
+  if (transactionObject.hbInventory.fpd) {
+    adUnit.fpd = transactionObject.hbInventory.fpd;
+  }
+
+  let slotName = getSlotName(transactionObject, adUnitPattern);
+  if (!slotName) {
+    return;
+  }
+
+  utils.deepSetValue(adUnit, 'fpd.context.pbAdSlot', slotName);
+  utils.deepSetValue(adUnit, 'fpd.context.adServer', {
+    name: 'gam',
+    adSlot: slotName
+  });
 }
 
 export function transformAutoSlots(transactionObject) {
@@ -345,4 +363,3 @@ export function addAdUnitPatterns(aups) {
 (getGlobal()).ppi = (getGlobal()).ppi || {};
 (getGlobal()).ppi.addAdUnitPatterns = addAdUnitPatterns;
 (getGlobal()).ppi.setCustomMappingFunction = setCustomMappingFunction;
-(getGlobal()).ppi.addSizeMappings = addSizeMappings;

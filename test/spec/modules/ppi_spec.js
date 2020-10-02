@@ -112,10 +112,10 @@ describe('ppiTest', () => {
             type: TransactionType.DIV,
             values: {
               name: 'header-bid-tag-0',
-            }
+            },
+            sizes: '1x1'
           },
           hbSource: 'auction',
-          sizes: '1x1',
           hbDestination: {
             type: 'gpt',
           }

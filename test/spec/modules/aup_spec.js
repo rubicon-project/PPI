@@ -292,7 +292,7 @@ describe('add adUnitPattern', () => {
     while (aup.adUnitPatterns.length) aup.adUnitPatterns.pop();
     expect(aup.adUnitPatterns.length).to.equal(0);
     aup.addAdUnitPatterns(adUnitPatterns);
-    let result = aup.getTOAUPPair(tos, aup.adUnitPatterns);
+    let result = aup.matchAUPs(tos, aup.adUnitPatterns);
     expect(tos.length).to.equal(result.length);
     for (let i = 0; i < result.length; i++) {
       expect(tos[i]).to.equal(result[i].transactionObject);
@@ -345,7 +345,7 @@ describe('add adUnitPattern', () => {
     ];
 
     aup.addAdUnitPatterns(adUnitPatterns);
-    let result = aup.getTOAUPPair(tos, aup.adUnitPatterns);
+    let result = aup.matchAUPs(tos, aup.adUnitPatterns);
     expect(tos.length).to.equal(result.length);
     for (let i = 0; i < result.length - 1; i++) {
       expect(adUnitPatterns[i].hbSource).to.equal(result[i].adUnitPattern.hbSource);
@@ -459,7 +459,7 @@ describe('add adUnitPattern', () => {
       // now do the size intersection between adUnitPattern sizes and limit sizes
       to.hbInventory.sizes = [[2, 2], [1, 1], [3, 3], [4, 4]];
       adUnit = aup.createAdUnit(adUnitPattern, to);
-      expect(adUnit.mediaTypes.banner.sizes).to.deep.equal([[2, 2], [1, 1]]);
+      expect(adUnit.mediaTypes.banner.sizes).to.deep.equal([[4, 4], [3, 3], [2, 2], [1, 1]]);
     });
   });
 });
