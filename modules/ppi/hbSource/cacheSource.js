@@ -6,13 +6,10 @@ export const cacheSourceSubmodule = {
 
   send(destinationObjects, callback) {
     utils.logInfo('[PPI] Using bids from bid cache');
-    if (!utils.isFn(callback)) {
-      utils.logError('[PPI] Callback is not a function ', callback);
-      return;
-    }
-
     // TODO: Tech Spec states that we should trigger new auction if cache is emtpy
-    callback();
+    if (utils.isFn(callback)) {
+      callback();
+    }
   },
 
   isValid(transactionObject) {
