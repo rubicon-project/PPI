@@ -81,11 +81,11 @@ function validateExistingSlot(gptSlot, adUnitPath, adUnitSizes, divId) {
     utils.logError(`[PPI] target div '${divId}' contains slot with ad unit path '${gptSlot.getAdUnitPath()}', expected ${adUnitPath}`);
   }
 
-  let gptSlotSizes = gptSlot.getSizes();
+  let gptSlotSizes = gptSlot.getSizes(window.innerWidth, window.innerHeight);
   gptSlotSizes = gptSlotSizes.filter(gptSlotSize => typeof gptSlotSize.getHeight === 'function' && typeof gptSlotSize.getWidth === 'function')
     .map(gptSlotSize => `${gptSlotSize.getWidth()}x${gptSlotSize.getHeight()}`);
 
-  adUnitSizes = adUnitSizes.map(size => `${size[0]}x${size[1]}`)
+  adUnitSizes = adUnitSizes.map(size => `${size[0]}x${size[1]}`);
 
   let difference = (listA, listB) => {
     let diff = new Set(listA)
