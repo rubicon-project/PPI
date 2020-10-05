@@ -1,0 +1,201 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>PPI Test Page - Infinite Scroll layout</title>
+
+    <script>
+        // pbjs initialization and configuration handled by publisher
+        window.pbjs = window.pbjs || { que: [] };
+        let pbjsConfig = {
+            useBidCache: true,
+            debug: true,
+            bidderTimeout: 10000,
+            rubicon: { singleRequest: true },
+            // add other prebid config here, like granularity, cmp, user syncs, bid aliases, etc.
+        }
+
+        // gpt initialization handled by publisher
+        window.googletag = window.googletag || { cmd: [] };
+        googletag.cmd.push(() => {
+            googletag.pubads().disableInitialLoad();
+            googletag.pubads().enableSingleRequest();
+            googletag.pubads().enableAsyncRendering();
+            googletag.pubads().collapseEmptyDivs(true);
+
+            window.gptSlot = googletag.defineSlot('/19968336/header-bid-tag-0', [[300, 250], [300, 600]], 'test-1')
+                .addService(googletag.pubads());
+            googletag.display(window.gptSlot);
+
+            googletag.enableServices();
+        });
+
+        // define some ad unit patterns
+        window.pbjs.que.push(() => {
+            window.pbjs.ppi.addAdUnitPatterns([{
+                slotPattern: "^.*header-bid-tag-0$",
+                divPattern: "",
+                bids: [
+                    {
+                        bidder: 'appnexus',
+                        params: {
+                            placementId: 13144370,
+                        },
+                    },
+                    {
+                        bidder: 'rubicon',
+                        params: {
+                            accountId: '1001',
+                            siteId: '113932',
+                            zoneId: '535510',
+                        }
+                    }],
+                mediaTypes: {
+                    banner: {
+                        sizes: [[300, 250], [300, 600]]
+                    },
+                },
+            }, {
+                slotPattern: "",
+                divPattern: "^test-.$",
+                bids: [
+                    {
+                        bidder: 'appnexus',
+                        params: {
+                            placementId: 13144370,
+                        },
+                    },
+                    {
+                        bidder: 'rubicon',
+                        params: {
+                            accountId: '1001',
+                            siteId: '113932',
+                            zoneId: '535510',
+                        }
+                    }],
+                mediaTypes: {
+                    banner: {
+                        sizes: [[300, 250], [300, 600]]
+                    },
+                },
+            }]);
+            pbjs.setConfig(pbjsConfig);
+        });
+    </script>
+    <script>
+        // initial load
+        googletag.cmd.push(() => {
+            window.pbjs.que.push(() => {
+                let to = [
+                    // initial auction and render ads for the first page
+                    {
+                        hbInventory: {
+                            type: 'AUPAutoSlots',
+                        },
+                        hbSource: 'auction',
+                        hbDestination: {
+                            type: 'gpt',
+                        }
+                    },
+                    // cache new bids for the next page
+                    {
+                        hbInventory: {
+                            type: 'AUPAutoSlots',
+                        },
+                        hbSource: 'auction',
+                        hbDestination: {
+                            type: 'cache',
+                        }
+                    }
+                ];
+                pbjs.ppi.requestBids(to);
+            });
+        });
+    </script>
+
+    <script type="text/javascript" src="https://securepubads.g.doubleclick.net/tag/js/gpt.js" async></script>
+    <script async src="../../build/dev/prebid.js"></script>
+</head>
+
+<body>
+    <div class="instructions">
+        <h1> PPI Test Pages - Infinite Scroll layout</h1>
+        <br><br>
+    </div>
+    <br>
+
+    <script>
+        // initialy there are 2 pages loaded
+        let pageLoaded = 2;
+        function isDivInViewport(el) {
+            var top = el.offsetTop;
+            return top >= window.pageYOffset && top <= window.pageYOffset + window.innerHeight;
+        }
+        function createNextPage(pageId) {
+            let offsetDiv = document.createElement('div');
+            offsetDiv.style.cssText = `height:100vh`;
+            let adUnitDiv = document.createElement('div');
+            adUnitDiv.id = `test-${pageId}`;
+            let description = document.createElement('p');
+            description.innerHTML = `Start of the ${pageId}. page`;
+
+            document.body.appendChild(offsetDiv);
+            document.body.appendChild(description);
+            document.body.appendChild(adUnitDiv);
+        }
+        window.addEventListener("scroll", () => {
+            let divId = 'test-' + pageLoaded;
+            let nextDiv = document.getElementById(divId);
+            if (!nextDiv) {
+                return;
+            }
+
+            if (!isDivInViewport(nextDiv)) {
+                return;
+            }
+            // refresh from cache and cache new bids
+            let tos = [{
+                hbInventory: {
+                    type: 'AUPSlotName',
+                    values: {
+                        name: '/19968336/header-bid-tag-0',
+                    },
+                },
+                hbSource: 'cache',
+                hbDestination: {
+                    type: 'gpt',
+                    values: { div: divId }
+                }
+            },
+            // cache new bids for the next page
+            {
+                hbInventory: {
+                    type: 'AUPSlotName',
+                    values: {
+                        name: '/19968336/header-bid-tag-0',
+                    },
+                },
+                hbSource: 'auction',
+                hbDestination: {
+                    type: 'cache',
+                }
+            }];
+            googletag.destroySlots();
+            pbjs.que.push(() => {
+                pbjs.ppi.requestBids(tos);
+            });
+            createNextPage(++pageLoaded);
+        });
+    </script>
+
+    <div id="test-1"></div>
+
+    <div style="height:100vh"></div>
+    <p>Start of the 2. page</p>
+    <div id="test-2"></div>
+</body>
+
+</html>
