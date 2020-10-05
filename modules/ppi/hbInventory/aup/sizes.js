@@ -1,5 +1,6 @@
 import * as utils from '../../../../src/utils.js';
 import { TransactionType } from './consts.js';
+import find from 'core-js-pure/features/array/find.js';
 
 export function findAUPSizes(aup) {
   let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
