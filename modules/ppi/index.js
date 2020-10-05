@@ -25,8 +25,8 @@ export function requestBids(transactionObjects) {
   for (const source in groupedTransactionObjects) {
     for (const dest in groupedTransactionObjects[source]) {
       let matchObjects = inventoryRegistry.createAdUnits(groupedTransactionObjects[source][dest]);
-      sourceRegistry[source].send(matchObjects, () => {
-        destinationRegistry[dest].send(matchObjects);
+      sourceRegistry[source].send(matchObjects, (matches) => {
+        destinationRegistry[dest].send(matches);
       });
 
       matchObjects.forEach(matchObj => {

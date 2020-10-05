@@ -9,11 +9,11 @@ export const auctionSourceSubmodule = {
     utils.logInfo('[PPI] Triggering new HB auction');
 
     getGlobal().requestBids({
-      adUnits: matchObjects.filter(d => d.adUnit).map(matchObj => matchObj.adUnit),
+      adUnits: matchObjects.filter(mo => mo.adUnit).map(mo => mo.adUnit),
       bidsBackHandler: (bids) => {
         utils.logInfo('[PPI] - bids from bidsBackHandler: ', bids);
         if (utils.isFn(callback)) {
-          callback();
+          callback(matchObjects);
         }
       }
     });
