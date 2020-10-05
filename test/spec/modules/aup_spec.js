@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import * as utils from 'src/utils.js';
-import * as aup from 'modules/ppi/hbInventory/aup/aup.js'
-import { TransactionType } from 'modules/ppi/hbInventory/aup/consts.js'
+import * as aup from 'modules/ppi/hbInventory/aup/aup.js';
+import * as aupSizes from 'modules/ppi/hbInventory/aup/sizes.js'
+import { TransactionType } from 'modules/ppi/hbInventory/aup/consts.js';
 import { makeSlot } from '../integration/faker/googletag.js';
 
 function makeGPTSlot(adUnitPath, divId, sizes = []) {
@@ -461,5 +462,25 @@ describe('add adUnitPattern', () => {
       adUnit = aup.createAdUnit(adUnitPattern, to);
       expect(adUnit.mediaTypes.banner.sizes).to.deep.equal([[4, 4], [3, 3], [2, 2], [1, 1]]);
     });
+  });
+});
+
+describe('responsive sizes', () => {
+  it('should consider viewport for AUP sizes', () => {
+    let AUP = {
+      mediaTypes: {
+        banner: {
+          sizes: [[300, 250], [300, 600], [160, 600]],
+          responsiveSizes: [
+            { sizes: [[300, 250]], minViewPort: [0, 0] },
+            { sizes: [[160, 600]], minViewPort: [768, 200] },
+            { sizes: [[160, 600], [300, 600]], minViewPort: [1540, 200] }
+          ]
+        }
+      }
+    };
+
+    let res = aupSizes.findAUPSizes(AUP);
+    // TODO: fill with expects for multiple use cases
   });
 });
