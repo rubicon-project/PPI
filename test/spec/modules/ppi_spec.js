@@ -397,6 +397,7 @@ describe('ppiTest', () => {
       window.googletag.cmd.push = function (command) {
         command.call();
       };
+      let customTargeting = { color: 'blue', interests: ['sports', 'music', 'movies'] };
       let tos = [{
         hbInventory: {
           type: TransactionType.SLOT_OBJECT,
@@ -407,7 +408,10 @@ describe('ppiTest', () => {
         hbSource: 'cache',
         hbDestination: {
           type: 'gpt',
-          values: { div: 'test-1' }
+          values: {
+            div: 'test-1',
+            targeting: customTargeting,
+          }
         },
       },
       {
@@ -427,7 +431,9 @@ describe('ppiTest', () => {
       expect(res[1].adUnit).to.be.a('undefined');
 
       let slot1Targeting = gptSlots[0].getTargeting();
-      expect(slot1Targeting.length).to.equal(Object.keys(adUnitTargeting['pattern-1']).length);
+      let pbjsTargetingKeys = Object.keys(adUnitTargeting['pattern-1']).length;
+      let customTargetingKeys = Object.keys(customTargeting).length;
+      expect(slot1Targeting.length).to.equal(pbjsTargetingKeys + customTargetingKeys);
     });
 
     it('should create and refresh gpt slots from cache', () => {
