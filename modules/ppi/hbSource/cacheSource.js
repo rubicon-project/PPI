@@ -4,7 +4,7 @@ import * as utils from '../../../src/utils.js';
 export const cacheSourceSubmodule = {
   name: 'cache',
 
-  send(destinationObjects, callback) {
+  send(matchObjects, callback) {
     utils.logInfo('[PPI] Using bids from bid cache');
     // TODO: Tech Spec states that we should trigger new auction if cache is emtpy
     if (utils.isFn(callback)) {

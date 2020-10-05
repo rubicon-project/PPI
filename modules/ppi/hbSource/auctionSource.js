@@ -5,11 +5,11 @@ import { getGlobal } from '../../../src/prebidGlobal.js';
 export const auctionSourceSubmodule = {
   name: 'auction',
 
-  send(destinationObjects, callback) {
+  send(matchObjects, callback) {
     utils.logInfo('[PPI] Triggering new HB auction');
 
     getGlobal().requestBids({
-      adUnits: destinationObjects.filter(d => d.adUnit).map(destObj => destObj.adUnit),
+      adUnits: matchObjects.filter(d => d.adUnit).map(matchObj => matchObj.adUnit),
       bidsBackHandler: (bids) => {
         utils.logInfo('[PPI] - bids from bidsBackHandler: ', bids);
         if (utils.isFn(callback)) {

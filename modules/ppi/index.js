@@ -4,7 +4,6 @@ import { hbSource } from './hbSource/hbSource.js';
 import { hbDestination } from './hbDestination/hbDestination.js';
 import { hbInventory } from './hbInventory/hbInventory.js';
 
-/** @type {Submodule[name]->handle} */
 let destinationRegistry = hbDestination;
 let sourceRegistry = hbSource;
 let inventoryRegistry = hbInventory;
@@ -16,7 +15,7 @@ export function requestBids(transactionObjects) {
   let validationResult = validateTransactionObjects(transactionObjects);
   let transactionResult = [];
   validationResult.invalid.forEach(inv => {
-    utils.logError(`[PPI] provided invalid transaction object`, inv);
+    utils.logError(`[PPI] provided invalid transaction object: ${inv.error}`, inv);
     transactionResult.push({
       transactionObject: inv,
     });
@@ -25,15 +24,15 @@ export function requestBids(transactionObjects) {
   let groupedTransactionObjects = groupTransactionObjects(validationResult.valid);
   for (const source in groupedTransactionObjects) {
     for (const dest in groupedTransactionObjects[source]) {
-      let destObjects = inventoryRegistry.createAdUnits(groupedTransactionObjects[source][dest]);
-      sourceRegistry[source].send(destObjects, () => {
-        destinationRegistry[dest].send(destObjects);
+      let matchObjects = inventoryRegistry.createAdUnits(groupedTransactionObjects[source][dest]);
+      sourceRegistry[source].send(matchObjects, () => {
+        destinationRegistry[dest].send(matchObjects);
       });
 
-      destObjects.forEach(destObj => {
+      matchObjects.forEach(matchObj => {
         transactionResult.push({
-          transactionObject: destObj.transactionObject,
-          adUnit: destObj.adUnit,
+          transactionObject: matchObj.transactionObject,
+          adUnit: matchObj.adUnit,
         });
       });
     }

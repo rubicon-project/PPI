@@ -5,22 +5,22 @@ import * as utils from '../../../src/utils.js';
 export const pageDestinationSubmodule = {
   name: 'page',
 
-  send(destinationObjects) {
+  send(matchObjects) {
     let pbjs = getGlobal();
-    destinationObjects.forEach(destObj => {
-      if (!destObj.adUnit) {
-        utils.logWarn('[PPI] adUnit not created for transaction object ', destObj.transactionObject);
+    matchObjects.forEach(matchObj => {
+      if (!matchObj.adUnit) {
+        utils.logWarn('[PPI] adUnit not created for transaction object ', matchObj.transactionObject);
         return;
       }
-      let highestBid = pbjs.getHighestCpmBids(destObj.adUnit.code);
+      let highestBid = pbjs.getHighestCpmBids(matchObj.adUnit.code);
       if (Array.isArray(highestBid)) {
         highestBid = highestBid[0];
       }
       if (!highestBid) {
-        utils.logWarn('[PPI] No bid for ad unit code ', destObj.adUnit.code);
+        utils.logWarn('[PPI] No bid for ad unit code ', matchObj.adUnit.code);
         return;
       }
-      let targetDiv = destObj.transactionObject.hbDestination.values.div;
+      let targetDiv = matchObj.transactionObject.hbDestination.values.div;
       let targetEl = document.getElementById(targetDiv);
       if (!targetEl) {
         utils.logError('[PPI] Div element not found ', targetDiv);

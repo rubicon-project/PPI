@@ -4,10 +4,10 @@ import * as utils from '../../../src/utils.js';
 export const cacheDestinationSubmodule = {
   name: 'cache',
 
-  send(destinationObjects) {
-    destinationObjects.forEach(destObj => {
-      if (destObj.adUnit) {
-        utils.logInfo('[PPI] Cached bids for ', destObj.adUnit.code);
+  send(matchObjects) {
+    matchObjects.forEach(matchObj => {
+      if (matchObj.adUnit) {
+        utils.logInfo('[PPI] Cached bids for ', matchObj.adUnit.code);
       }
     });
   },

@@ -1,0 +1,205 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>PPI Test Page</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <script>
+        // pbjs initialization and configuration handled by publisher
+        window.pbjs = window.pbjs || { que: [] };
+        let pbjsConfig = {
+            useBidCache: true,
+            debug: true,
+            bidderTimeout: 10000,
+            rubicon: { singleRequest: true },
+            // add other prebid config here, like granularity, cmp, user syncs, bid aliases, etc.
+        }
+
+        // gpt initialization handled by publisher
+        window.googletag = window.googletag || { cmd: [] };
+        googletag.cmd.push(() => {
+            googletag.pubads().disableInitialLoad();
+            googletag.pubads().enableSingleRequest();
+            googletag.pubads().enableAsyncRendering();
+            googletag.pubads().collapseEmptyDivs(true);
+
+            googletag.enableServices();
+        });
+
+        // define some ad unit patterns
+        window.pbjs.que.push(() => {
+            window.pbjs.ppi.addAdUnitPatterns(
+                [{
+                    slotPattern: "^.*header-bid-tag-0$",
+                    divPattern: "",
+                    bids: [
+                        {
+                            bidder: 'appnexus',
+                            params: {
+                                placementId: 13144370,
+                            },
+                        },
+                        {
+                            bidder: 'rubicon',
+                            params: {
+                                accountId: '1001',
+                                siteId: '113932',
+                                zoneId: '535510',
+                            }
+                        }],
+                    mediaTypes: {
+                        banner: {
+                            sizes: [[300, 250], [300, 600]]
+                        },
+                    },
+                }, {
+                    slotPattern: "",
+                    divPattern: "^test-.$",
+                    bids: [
+                        {
+                            bidder: 'appnexus',
+                            params: {
+                                placementId: 13144370,
+                            },
+                        },
+                        {
+                            bidder: 'rubicon',
+                            params: {
+                                accountId: '1001',
+                                siteId: '113932',
+                                zoneId: '535510',
+                            }
+                        }],
+                    mediaTypes: {
+                        banner: {
+                            sizes: [[300, 250], [300, 600]]
+                        },
+                    },
+                }
+                ]
+            );
+            pbjs.setConfig(pbjsConfig);
+        });
+    </script>
+    <script>
+        function initialLoad() {
+            window.pbjs.que.push(() => {
+                let to = [
+                    // initial auction and render ads for the first slide
+                    {
+                        hbInventory: {
+                            type: 'AUPSlotName',
+                            values: {
+                                name: '/19968336/header-bid-tag-0',
+                            },
+                        },
+                        hbSource: 'auction',
+                        hbDestination: {
+                            type: 'gpt',
+                            values: { div: 'test-1' }
+                        }
+                    },
+                    // cache new bids for the next slide
+                    {
+                        hbInventory: {
+                            type: 'AUPSlotName',
+                            values: {
+                                name: '/19968336/header-bid-tag-0',
+                            },
+                        },
+                        hbSource: 'auction',
+                        hbDestination: {
+                            type: 'cache',
+                        }
+                    }
+                ];
+                pbjs.ppi.requestBids(to);
+            });
+        }
+        initialLoad();
+    </script>
+
+    <script type="text/javascript" src="https://securepubads.g.doubleclick.net/tag/js/gpt.js" async></script>
+    <script async src="../../build/dev/prebid.js"></script>
+</head>
+
+<body>
+    <div class="instructions">
+        <h1> PPI Test Pages - Gallery layout</h1>
+
+        <div id="quote" class="info"></div>
+        <div class="author" style="text-align:right;"></div>
+        <br><br>
+    </div>
+    <br>
+
+    <script>
+        function generateQuote() {
+            fetch("https://api.quotable.io/random")
+                .then(function (data) {
+                    return data.json();
+                })
+                .then(function (data) {
+                    document.getElementById("quote").innerHTML = data.content; document.querySelector(".author").innerHTML = "- " + data.author;
+                })
+                .catch(function (err) {
+                    console.log(err);
+                });
+        }
+
+        generateQuote();
+    </script>
+
+    <script>
+        function generateNewSlide() {
+            generateQuote();
+
+            // on new slide, render ads from cache & cache some new bids
+            window.pbjs.que.push(() => {
+                let to = [
+                    // read from cache and render
+                    {
+                        hbInventory: {
+                            type: 'AUPSlotName',
+                            values: {
+                                name: '/19968336/header-bid-tag-0',
+                            },
+                        },
+                        hbSource: 'cache',
+                        hbDestination: {
+                            type: 'gpt',
+                            values: { div: 'test-1' }
+                        }
+                    },
+                    // cache new bids for the next slide
+                    {
+                        hbInventory: {
+                            type: 'AUPSlotName',
+                            values: {
+                                name: '/19968336/header-bid-tag-0',
+                            },
+                        },
+                        hbSource: 'auction',
+                        hbDestination: {
+                            type: 'cache',
+                        }
+                    }
+                ];
+                pbjs.ppi.requestBids(to);
+            });
+        }
+    </script>
+
+    <div id="test-1" class="adunit"></div>
+    <br />
+    <br />
+    <button onclick='generateNewSlide()'>Next >></button>
+</body>
+
+</html>

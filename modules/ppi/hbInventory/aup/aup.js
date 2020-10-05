@@ -18,7 +18,7 @@ export const aupInventorySubmodule = {
 let aupsMatched = false;
 export function createAdUnits(transactionObjects) {
   aupsMatched = true;
-  let result = [];
+  let matches = [];
   let allTOs = [];
 
   // transform autoslots
@@ -43,13 +43,13 @@ export function createAdUnits(transactionObjects) {
     to.divId = getDivId(to, aup);
     to.slotName = getSlotName(to, aup);
 
-    result.push({
+    matches.push({
       transactionObject: to,
       adUnit: au,
     });
   });
 
-  return result;
+  return matches;
 }
 
 export function isValid(transactionObject) {
@@ -109,7 +109,7 @@ export function createAdUnit(adUnitPattern, transactionObject) {
 }
 
 export function matchAUPs(transactionObjects, adUnitPatterns) {
-  let result = [];
+  let matches = [];
   let lock = new Set();
   transactionObjects.forEach(to => {
     let aups = findMatchingAUPs(to, adUnitPatterns).filter(a => {
@@ -135,13 +135,13 @@ export function matchAUPs(transactionObjects, adUnitPatterns) {
         lock.add(aup);
         break;
     }
-    result.push({
+    matches.push({
       transactionObject: to,
       adUnitPattern: aup,
     });
   });
 
-  return result;
+  return matches;
 }
 
 function findMatchingAUPs(transactionObject, adUnitPatterns) {
@@ -290,7 +290,7 @@ export function transformAutoSlots(transactionObject) {
   try {
     gptSlots = window.googletag.pubads().getSlots();
   } catch (e) {
-    utils.logError('[PPI] - could not get all gpt slots: ', e, ' is gpt initialized?');
+    utils.logError(`[PPI] - could not get all gpt slots: ${e}, is gpt initialized?`);
   }
 
   if (!gptSlots || !gptSlots.length) {

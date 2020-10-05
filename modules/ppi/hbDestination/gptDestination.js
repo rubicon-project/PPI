@@ -8,36 +8,36 @@ window.googletag.cmd = window.googletag.cmd || [];
 export const gptDestinationSubmodule = {
   name: 'gpt',
 
-  send(destinationObjects) {
+  send(matchObjects) {
     window.googletag.cmd.push(() => {
       let divIdSlotMapping = getDivIdGPTSlotMapping();
       let gptSlotsToRefresh = [];
       let adUnitCodes = [];
       let mappings = {};
-      destinationObjects.forEach(destObj => {
-        destObj.transactionObject.hbDestination.values = destObj.transactionObject.hbDestination.values || {};
-        let divId = destObj.transactionObject.hbDestination.values.div || destObj.transactionObject.divId;
+      matchObjects.forEach(matchObj => {
+        matchObj.transactionObject.hbDestination.values = matchObj.transactionObject.hbDestination.values || {};
+        let divId = matchObj.transactionObject.hbDestination.values.div || matchObj.transactionObject.divId;
         if (!divId) {
-          utils.logError('[PPI] GPT Destination Module: unable to find target div id for transaction object: ', destObj.transactionObject);
+          utils.logError('[PPI] GPT Destination Module: unable to find target div id for transaction object: ', matchObj.transactionObject);
           return;
         }
 
-        let adUnitPath = destObj.transactionObject.slotName;
+        let adUnitPath = matchObj.transactionObject.slotName;
 
         let adUnitSizes = [];
-        if (destObj.adUnit) {
-          adUnitSizes = utils.deepAccess(destObj.adUnit, 'mediaTypes.banner.sizes');
+        if (matchObj.adUnit) {
+          adUnitSizes = utils.deepAccess(matchObj.adUnit, 'mediaTypes.banner.sizes');
         }
 
         // existing gpt slot
         let gptSlot = divIdSlotMapping[divId];
         if (!gptSlot) {
           if (!adUnitPath) {
-            utils.logError('[PPI] GPT Destination Module: unable to find adUnitPath for transaction object: ', destObj.transactionObject);
+            utils.logError('[PPI] GPT Destination Module: unable to find adUnitPath for transaction object: ', matchObj.transactionObject);
             return;
           }
           gptSlot = createGPTSlot(adUnitPath, adUnitSizes, divId);
-        } else if (destObj.adUnit) {
+        } else if (matchObj.adUnit) {
           validateExistingSlot(gptSlot, adUnitPath, adUnitSizes, divId);
         }
 
@@ -46,13 +46,13 @@ export const gptDestinationSubmodule = {
           return;
         }
 
-        setCustomTargeting(gptSlot, destObj.transactionObject.hbDestination.values.targeting);
+        setCustomTargeting(gptSlot, matchObj.transactionObject.hbDestination.values.targeting);
 
         gptSlotsToRefresh.push(gptSlot);
-        if (!destObj.adUnit) {
+        if (!matchObj.adUnit) {
           return;
         }
-        let code = destObj.adUnit.code;
+        let code = matchObj.adUnit.code;
         adUnitCodes.push(code);
 
         mappings[code] = divId;

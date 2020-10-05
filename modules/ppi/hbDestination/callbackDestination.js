@@ -6,21 +6,21 @@ import { filters } from '../../../src/targeting.js';
 export const callbackDestinationSubmodule = {
   name: 'callback',
 
-  send(destinationObjects) {
+  send(matchObjects) {
     let pbjs = getGlobal();
-    destinationObjects.forEach(destObj => {
-      let callback = utils.deepAccess(destObj, 'transactionObject.hbDestination.values.callback');
+    matchObjects.forEach(matchObj => {
+      let callback = utils.deepAccess(matchObj, 'transactionObject.hbDestination.values.callback');
       if (!utils.isFn(callback)) {
         utils.logError('[PPI] Callback is not a function ', callback);
         return;
       }
-      if (!destObj.adUnit) {
-        utils.logWarn('[PPI] adUnit not created for transaction object ', destObj.transactionObject);
+      if (!matchObj.adUnit) {
+        utils.logWarn('[PPI] adUnit not created for transaction object ', matchObj.transactionObject);
         utils.logWarn('[PPI] executing callback without bids');
         callback();
         return;
       }
-      let bids = pbjs.getBidResponsesForAdUnitCode(destObj.adUnit.code)
+      let bids = pbjs.getBidResponsesForAdUnitCode(matchObj.adUnit.code)
         .filter(filters.isUnusedBid)
         .filter(filters.isBidNotExpired);
 
