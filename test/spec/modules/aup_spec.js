@@ -466,7 +466,22 @@ describe('add adUnitPattern', () => {
 });
 
 describe('responsive sizes', () => {
+  let sandbox;
+  beforeEach(() => {
+    sandbox = sinon.sandbox.create();
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
   it('should consider viewport for AUP sizes', () => {
+    let viewport = [760, 1000];
+    aupSizes.getViewport = () => {
+      throw viewport;
+    };
+    sandbox.stub(window, 'innerWidth').get(() => viewport[0]);
+    sandbox.stub(window, 'innerHeight').get(() => viewport[1]);
     let AUP = {
       mediaTypes: {
         banner: {
@@ -481,6 +496,16 @@ describe('responsive sizes', () => {
     };
 
     let res = aupSizes.findAUPSizes(AUP);
-    // TODO: fill with expects for multiple use cases
+
+    expect(res).to.deep.equal([[300, 250]]);
+    viewport[0] = 770;
+    res = aupSizes.findAUPSizes(AUP);
+
+    expect(res).to.deep.equal([[160, 600]]);
+    viewport[0] = 1770;
+
+    res = aupSizes.findAUPSizes(AUP);
+
+    expect(res).to.deep.equal([[160, 600], [300, 600]]);
   });
 });

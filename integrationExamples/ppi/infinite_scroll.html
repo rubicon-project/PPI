@@ -167,7 +167,10 @@
                 hbSource: 'cache',
                 hbDestination: {
                     type: 'gpt',
-                    values: { div: divId }
+                    values: {
+                        div: divId,
+                        targeting: { color: 'blue', interests: ['sports', 'music', 'movies'] }
+                    },
                 }
             },
             // cache new bids for the next page
