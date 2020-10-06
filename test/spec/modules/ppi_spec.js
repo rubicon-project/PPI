@@ -3,28 +3,6 @@ import * as utils from 'src/utils.js';
 import * as ppi from 'modules/ppi/index.js'
 import * as aup from 'modules/ppi/hbInventory/aup/aup.js'
 import { TransactionType } from 'modules/ppi/hbInventory/aup/consts.js'
-import { makeSlot } from '../integration/faker/googletag.js';
-import { targeting } from 'src/targeting.js';
-
-function makeGPTSlot(adUnitPath, divId, sizes = []) {
-  let gptSlot = makeSlot({ code: adUnitPath, divId: divId });
-  let sizeObj = [];
-  sizes.forEach(size => {
-    sizeObj.push({
-      size,
-      getWidth: () => {
-        return size[0];
-      },
-      getHeight: () => {
-        return size[1];
-      }
-    })
-  });
-  gptSlot.getSizes = () => {
-    return sizeObj;
-  }
-  return gptSlot;
-}
 
 describe('ppiTest', () => {
   describe('validate transaction objects', () => {
@@ -178,7 +156,6 @@ describe('ppiTest', () => {
   describe('request bids', () => {
     // clear everything
     while (aup.adUnitPatterns.length) aup.adUnitPatterns.pop();
-    window.googletag.pubads().setSlots([]);
 
     let adUnitPatterns = [
       {
@@ -275,13 +252,6 @@ describe('ppiTest', () => {
     ];
     aup.addAdUnitPatterns(adUnitPatterns);
 
-    for (let i = 1; i <= 4; i++) {
-      let newDiv = document.createElement('div');
-      newDiv.id = 'test-' + i;
-
-      document.body.appendChild(newDiv);
-    }
-
     let sandbox;
     beforeEach(() => {
       sandbox = sinon.sandbox.create();
@@ -289,59 +259,6 @@ describe('ppiTest', () => {
 
     afterEach(() => {
       sandbox.restore();
-    });
-    it('should request bids from cache to page', () => {
-      sandbox.stub($$PREBID_GLOBAL$$, 'getHighestCpmBids').callsFake((key) => {
-        if (key === 'pattern-1') return [{ width: 300, height: 250 }];
-        return [];
-      });
-
-      let res = ppi.requestBids(transactionObjects);
-      expect(res[0].adUnit.code).to.equal('pattern-1');
-      expect(res[1].adUnit).to.be.a('undefined');
-      expect(res[2].adUnit.code).to.equal('pattern-2');
-    });
-
-    it('should request bids from cache to callback', () => {
-      sandbox.stub($$PREBID_GLOBAL$$, 'getBidResponsesForAdUnitCode').callsFake((key) => {
-        if (key === 'pattern-1') {
-          return [{
-            width: 300,
-            height: 250,
-            status: 'available',
-            responseTimestamp: new Date().getTime(),
-            ttl: 60,
-            cpm: 1.23,
-          }];
-        }
-        return [];
-      });
-      let tos = utils.deepClone(transactionObjects);
-      tos[0].hbDestination = {
-        type: 'callback',
-        values: {
-          callback: (bids) => {
-            expect(bids.length).to.equal(1);
-            expect(bids[0].cpm).to.equal(1.23);
-          }
-        }
-      };
-      tos[1].hbDestination = {
-        type: 'callback',
-        values: {
-          callback: (bids) => {
-            expect(bids).to.be.a('undefined');
-          }
-        }
-      };
-      tos[2].hbDestination = {
-        type: 'callback',
-        values: {
-          callback: 'this should be function, not a string'
-        }
-      };
-
-      ppi.requestBids(tos);
     });
 
     it('should cache new bids', () => {
@@ -363,131 +280,6 @@ describe('ppiTest', () => {
       expect(res[1].adUnit).to.be.a('undefined');
       expect(res[2].adUnit.code).to.equal('pattern-2');
       expect(newAuctionHeld).to.equal(true);
-    });
-
-    it('should refresh gpt slots from cache', () => {
-      while (aup.adUnitPatterns.length) aup.adUnitPatterns.pop();
-      aup.addAdUnitPatterns(adUnitPatterns);
-      window.googletag.pubads().setSlots([]);
-      let gptSlotSizes = [[300, 250], [300, 600]];
-      let gptSlots = [
-        makeGPTSlot('/19968336/header-bid-tag-0', 'test-1', gptSlotSizes),
-        makeGPTSlot('/19968336/no-match', 'no-match', gptSlotSizes),
-      ];
-
-      let adUnitTargeting = {
-        'pattern-1': {
-          hb_source: 'client',
-          hb_pb: '1.69',
-        }
-      }
-      sandbox.stub(targeting, 'getAllTargeting').callsFake((adUnitCodes) => {
-        let result = {};
-        adUnitCodes.forEach(code => {
-          result[code] = adUnitTargeting[code] || {};
-        });
-        return result;
-      });
-      let _pubads = window.googletag.pubads();
-      _pubads.refresh = (slots) => {
-        expect(slots).to.deep.equal(gptSlots);
-      };
-      window.googletag.pubads = () => { return _pubads };
-      window.googletag.cmd = window.googletag.cmd || [];
-      window.googletag.cmd.push = function (command) {
-        command.call();
-      };
-      let customTargeting = { color: 'blue', interests: ['sports', 'music', 'movies'] };
-      let tos = [{
-        hbInventory: {
-          type: TransactionType.SLOT_OBJECT,
-          values: {
-            slot: gptSlots[0],
-          }
-        },
-        hbSource: 'cache',
-        hbDestination: {
-          type: 'gpt',
-          values: {
-            div: 'test-1',
-            targeting: customTargeting,
-          }
-        },
-      },
-      {
-        hbInventory: {
-          type: TransactionType.SLOT_OBJECT,
-          values: {
-            slot: gptSlots[1],
-          }
-        },
-        hbSource: 'cache',
-        hbDestination: {
-          type: 'gpt',
-        }
-      }];
-      let res = ppi.requestBids(tos);
-      expect(res[0].adUnit.code).to.equal('pattern-1');
-      expect(res[1].adUnit).to.be.a('undefined');
-
-      let slot1Targeting = gptSlots[0].getTargeting();
-      let pbjsTargetingKeys = Object.keys(adUnitTargeting['pattern-1']).length;
-      let customTargetingKeys = Object.keys(customTargeting).length;
-      expect(slot1Targeting.length).to.equal(pbjsTargetingKeys + customTargetingKeys);
-    });
-
-    it('should create and refresh gpt slots from cache', () => {
-      while (aup.adUnitPatterns.length) aup.adUnitPatterns.pop();
-      aup.addAdUnitPatterns(adUnitPatterns);
-      window.googletag.pubads().setSlots([]);
-      let _pubads = window.googletag.pubads();
-      let slotsRefreshed = false;
-      _pubads.refresh = (slots) => {
-        slotsRefreshed = true;
-      };
-
-      window.googletag.defineSlot = (adUnitPath, sizes, divId) => {
-        let slot = makeGPTSlot(adUnitPath, divId, sizes);
-        slot.addService = () => { };
-        return slot;
-      }
-      window.googletag.display = () => { };
-      window.googletag.pubads = () => { return _pubads };
-      window.googletag.cmd = window.googletag.cmd || [];
-      window.googletag.cmd.push = function (command) {
-        command.call();
-      };
-      let tos = [{
-        hbInventory: {
-          type: TransactionType.DIV,
-          values: {
-            name: 'test-1',
-          }
-        },
-        hbSource: 'cache',
-        hbDestination: {
-          type: 'gpt',
-        }
-      },
-      {
-        hbInventory: {
-          type: TransactionType.SLOT,
-          values: {
-            name: '/19968336/header-bid-tag-0',
-          }
-        },
-        hbSource: 'cache',
-        hbDestination: {
-          type: 'gpt',
-          values: { div: 'test-2' }
-        }
-      }];
-
-      let res = ppi.requestBids(tos);
-      expect(res[0].adUnit.code).to.equal('pattern-2');
-      expect(res[1].adUnit.code).to.equal('pattern-1');
-      expect(slotsRefreshed).to.equal(true);
-      expect(googletag.pubads().getSlots().length).to.equal(tos.length);
     });
   });
 });
