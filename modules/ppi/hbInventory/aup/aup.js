@@ -96,11 +96,6 @@ export function createAdUnit(adUnitPattern, transactionObject) {
     delete adUnit.divPattern;
     delete adUnit.slotPatternRegex;
     delete adUnit.divPatternRegex;
-
-    // attach transactionId
-    if (!adUnit.transactionId) {
-      adUnit.transactionId = utils.generateUUID();
-    }
   } catch (e) {
     utils.logError('[PPI] error parsing adUnit', e);
   }

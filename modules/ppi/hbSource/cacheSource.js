@@ -30,6 +30,7 @@ export const cacheSourceSubmodule = {
         .filter(bid => bid.cpm > 0);
 
       if (!bids || !bids.length) {
+        utils.logInfo(`[PPI] - did not find any bid for ${matchObj.adUnit.code}, queuing it for new HB auction`);
         emptyCacheMatches.push(matchObj);
         return;
       }
