@@ -6,7 +6,7 @@ export function findAUPSizes(aup) {
   let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
   let respSizes = utils.deepAccess(aup, 'mediaTypes.banner.responsiveSizes');
   if (respSizes && respSizes.length) {
-    let vpSizes = filterSizeMappingSizes(respSizes, getViewport());
+    let vpSizes = filterResponsiveSizes(respSizes, getViewport());
     return filterSizesByIntersection(vpSizes, aupSizes);
   }
 
@@ -55,7 +55,7 @@ function getGptSlotSizes(gptSlot) {
 }
 
 /**
- * @param {Object} sizeMapping array of viewport -> adUnit size mappings where each size is [w, h]
+ * @param {Object} responsiveSizes array of viewport -> adUnit size mappings where each size is [w, h]
  *     [
  *       {minViewPort: viewportSize1, sizes: [adUnitSize1, adUnitSize2, etc]}
  *       {minViewPort: viewportSize2, sizes: [adUnitSize1, adUnitSize2, etc]}
@@ -64,25 +64,25 @@ function getGptSlotSizes(gptSlot) {
  * @param {Array} viewport dimensions [width, height]
  * @returns {Array} of available sizes based on current viewport or undefined if no matching viewport found
  */
-function filterSizeMappingSizes(sizeMappings, viewport) {
-  if (!sizeMappings) {
+function filterResponsiveSizes(responsiveSizes, viewport) {
+  if (!responsiveSizes) {
     return;
   }
 
   let sizes;
   try {
-    // sort sizeMappings from biggest to smallest viewport
+    // sort responsiveSizes from biggest to smallest viewport
     // then find the biggest one that fits in the given viewport
-    let val = (find(sizeMappings.sort((a, b) => {
+    let val = (find(responsiveSizes.sort((a, b) => {
       let aVP = a.minViewPort;
       let bVP = b.minViewPort;
       return bVP[0] * bVP[1] - aVP[0] * aVP[1] || bVP[0] - aVP[0] || bVP[1] - aVP[1];
-    }), (sizeMapping) => {
-      return viewport[0] >= sizeMapping.minViewPort[0] && viewport[1] >= sizeMapping.minViewPort[1];
+    }), (responsiveSize) => {
+      return viewport[0] >= responsiveSize.minViewPort[0] && viewport[1] >= responsiveSize.minViewPort[1];
     }));
     sizes = val && val.sizes;
   } catch (e) {
-    utils.logError('[PPI] while parsing sizeMappings:', sizeMappings, e);
+    utils.logError('[PPI] while parsing responsiveSizes:', responsiveSizes, e);
   }
 
   return sizes;
