@@ -18,7 +18,7 @@ describe('test ppi hbSource submodule', () => {
     });
 
     let matches = [{ adUnit: { code: 'test-1' } }];
-    hbSource['auction'].send(matches, () => {
+    hbSource['auction'].requestBids(matches, () => {
       bidsRequested = true;
     });
 
@@ -48,7 +48,7 @@ describe('test ppi hbSource submodule', () => {
     let matches = [{ adUnit: { code: 'test-1' } }];
 
     let cacheCallbackCalled = false;
-    hbSource['cache'].send(matches, () => {
+    hbSource['cache'].requestBids(matches, () => {
       cacheCallbackCalled = true;
     });
 
@@ -64,7 +64,7 @@ describe('test ppi hbSource submodule', () => {
     let matches = [{ adUnit: { code: 'test-1' } }];
 
     let cacheCallbackCalled = false;
-    hbSource['cache'].send(matches, () => {
+    hbSource['cache'].requestBids(matches, () => {
       cacheCallbackCalled = true;
     });
 

@@ -2,6 +2,11 @@ import * as utils from '../../../../src/utils.js';
 import { TransactionType } from './consts.js';
 import find from 'core-js-pure/features/array/find.js';
 
+/**
+ * Find sizes for given adUnitPattern
+ * @param {{Object}} aup - adUnitPattern
+ * @return {(Object[])} array of sizes formatted [[w,h],...]
+ */
 export function findAUPSizes(aup) {
   let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
   let respSizes = utils.deepAccess(aup, 'mediaTypes.banner.responsiveSizes');
@@ -13,6 +18,12 @@ export function findAUPSizes(aup) {
   return aupSizes;
 }
 
+/**
+ * Find limit sizes from transactionObject
+ * If transaction object is slot object type, get sizes from gpt slot
+ * @param {{Object}} transactionObject
+ * @return {(Object[])} array of sizes formatted [[w,h],...]
+ */
 export function findLimitSizes(transactionObject) {
   if (transactionObject.hbInventory.type === TransactionType.SLOT_OBJECT) {
     if (transactionObject.hbInventory.sizes) {

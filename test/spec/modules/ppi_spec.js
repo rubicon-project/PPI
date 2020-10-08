@@ -73,19 +73,6 @@ describe('ppiTest', () => {
             values: { div: 'test-1' }
           }
         },
-        // source and destination can't be cache at the same time
-        {
-          hbInventory: {
-            type: TransactionType.DIV,
-            values: {
-              name: 'header-bid-tag-0',
-            }
-          },
-          hbSource: 'cache',
-          hbDestination: {
-            type: 'cache',
-          }
-        },
         // sizes can't be string
         {
           hbInventory: {
