@@ -22,6 +22,7 @@ export const aupInventorySubmodule = {
 let aupsMatched = false;
 
 /**
+ * For transaction objects match adUnitPatterns and create pbjs adUnits
  * @param {(Object[])} transactionObjects
  * @return {(Object[])} array of transactionObjects and matched adUnits
  */
@@ -61,6 +62,11 @@ export function createAdUnits(transactionObjects) {
   return matches;
 }
 
+/**
+ * Validate transaction object
+ * @param {(Object)} transactionObject
+ * @return {boolean}
+ */
 export function isValid(transactionObject) {
   switch (transactionObject.hbInventory.type) {
     case TransactionType.SLOT:
@@ -73,6 +79,14 @@ export function isValid(transactionObject) {
   return true;
 }
 
+/**
+ * Given adUnitPattern and transaction object create adUnit
+ * First determine sizes needed for 'mediaTypes.banner.sizes'
+ * If adUnitPattern doesn't have 'code', use hash function to create adUnit code
+ * @param {(Object)} adUnitPattern
+ * @param {(Object)} transactionObject
+ * @return {{Object}} adUnit
+ */
 export function createAdUnit(adUnitPattern, transactionObject) {
   // TODO: will it hurt PBJS if 'fluid' gets into ad unit MTO sizes?
   let limitSizes = findLimitSizes(transactionObject);
@@ -112,6 +126,14 @@ export function createAdUnit(adUnitPattern, transactionObject) {
   return adUnit;
 }
 
+/**
+ * For transactionObjects match adUnitPattern
+ * If there are multiple matches, take the first one
+ * When adUnitPattern is matched, lock it so that other transactionObject can't match it
+ * @param {(Object[])} transactionObjects
+ * @param {(Object[])} adUnitPatterns
+ * @return {{Object[]}} matches
+ */
 export function matchAUPs(transactionObjects, adUnitPatterns) {
   let matches = [];
   let lock = new Set();
@@ -139,6 +161,8 @@ export function matchAUPs(transactionObjects, adUnitPatterns) {
         lock.add(aup);
         break;
     }
+
+    // create 'match' object that contains transactionObject and adUnitPattern
     matches.push({
       transactionObject: to,
       adUnitPattern: aup,
@@ -148,6 +172,15 @@ export function matchAUPs(transactionObjects, adUnitPatterns) {
   return matches;
 }
 
+/**
+ * For transactionObject match adUnitPatterns
+ * Based on transaction type do slotPattern regex matching and/or divPattern regex matching
+ * If regex is matched then check if sizes match
+ * If sizes are matched then execute customMappingFunction
+ * @param {(Object)} transactionObject
+ * @param {(Object[])} adUnitPatterns
+ * @return {{Object[]}} matchedAdUnitPatterns
+ */
 function findMatchingAUPs(transactionObject, adUnitPatterns) {
   return adUnitPatterns.filter(aup => {
     let match = false;
@@ -203,6 +236,12 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
   });
 }
 
+/**
+ * Validate adUnitPattern
+ * If adUnitPattern is not valid, populate error message for the user to process
+ * @param {(Object)} aup adUnitPattern
+ * @return {{Object}} aup
+ */
 function validateAUP(aup) {
   if (!aup.divPattern && !aup.slotPattern) {
     aup.error = `can't create AUP without slot pattern or div pattern`;
@@ -236,6 +275,12 @@ function validateAUP(aup) {
   return aup;
 }
 
+/**
+ * Get source divId
+ * @param {(Object)} transactionObject
+ * @param {(Object)} adUnitPattern
+ * @return {string}
+ */
 function getDivId(transactionObject, adUnitPattern) {
   if (transactionObject.hbInventory.type === TransactionType.SLOT_OBJECT) {
     return transactionObject.hbInventory.values.slot.getSlotElementId();
@@ -253,6 +298,12 @@ function getDivId(transactionObject, adUnitPattern) {
   return isRegex(div) ? '' : div;
 }
 
+/**
+ * Get slot name
+ * @param {(Object)} transactionObject
+ * @param {(Object)} adUnitPattern
+ * @return {string}
+ */
 function getSlotName(transactionObject, adUnitPattern) {
   switch (transactionObject.hbInventory.type) {
     case TransactionType.SLOT:
@@ -269,6 +320,12 @@ function getSlotName(transactionObject, adUnitPattern) {
   return '';
 }
 
+/**
+ * Add first party data to pbjs adUnit
+ * @param {(Object)} adUnit
+ * @param {(Object)} adUnitPattern
+ * @param {(Object)} transactionObject
+ */
 export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
   if (transactionObject.hbInventory.fpd) {
     adUnit.fpd = transactionObject.hbInventory.fpd;
@@ -286,6 +343,11 @@ export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
   });
 }
 
+/**
+ * Transform autoSlots transaction object into array of slotObject types
+ * @param {(Object)} transactionObject
+ * @return {{Object[]}} transactionObjects
+ */
 export function transformAutoSlots(transactionObject) {
   if (!transactionObject) {
     return [];
@@ -343,6 +405,13 @@ export function setCustomMappingFunction(mappingFunction) {
 }
 
 export const adUnitPatterns = [];
+
+/**
+ * Add adUnitPatterns into pbjs.ppi.addUnitPatterns array
+ * Before adding validate each transaction object and create appropriate RegExp objects
+ * @param {(Object)} transactionObject
+ * @return {{Object[]}} transactionObjects
+ */
 export function addAdUnitPatterns(aups) {
   aups.forEach(aup => {
     try {
