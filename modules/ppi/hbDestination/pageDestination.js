@@ -1,10 +1,18 @@
 import { getGlobal } from '../../../src/prebidGlobal.js';
 import * as utils from '../../../src/utils.js';
 
-/** @type {Submodule} */
+/** @type {Submodule}
+ * Responsibility of this submodule is to provide mechanism for ppi to render ads directly on the page without adserver
+ * This submodule will get the ad from the highest bid, it will create iframe and it will call pbjs.renderAd to render the ad
+*/
 export const pageDestinationSubmodule = {
   name: 'page',
 
+  /**
+   * send results to the page, for each matched adUnit: get highest bid, create iframe and render ad
+   * @param {(Object[])} matchObjects array of transactionObjects and matched adUnits
+   * @param {function} callback
+   */
   send(matchObjects) {
     let pbjs = getGlobal();
     matchObjects.forEach(matchObj => {

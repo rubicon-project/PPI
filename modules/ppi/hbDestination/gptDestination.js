@@ -4,10 +4,23 @@ import * as utils from '../../../src/utils.js';
 window.googletag = window.googletag || {};
 window.googletag.cmd = window.googletag.cmd || [];
 
-/** @type {Submodule} */
+/** @type {Submodule}
+ * Responsibility of this submodule is to provide mechanism for ppi to refresh gpt slots
+ * The submodule will create gpt slots if they are not on the page (not created by the user)
+ * To create gpt slots, submodule needs to have required information: adUnitPath, sizes and divId
+ * For each transactionObject that has matched adUnit, the submodule will set targeting by calling pbjs.setTargetingForGPTAsync
+ * Beside pbjs targeting, user can provide custom targeting for this submodule to set on gpt slots
+ * After setting targeting the submodule will refresh gpt slots
+*/
 export const gptDestinationSubmodule = {
   name: 'gpt',
 
+  /**
+   * find appropriate gpt slots, set targeting on them and refresh them
+   * if appropriate gpt slot can be found on the page, then create it
+   * @param {(Object[])} matchObjects array of transactionObjects and matched adUnits
+   * @param {function} callback
+   */
   send(matchObjects) {
     window.googletag.cmd.push(() => {
       let divIdSlotMapping = getDivIdGPTSlotMapping();

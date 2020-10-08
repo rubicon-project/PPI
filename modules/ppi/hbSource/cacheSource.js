@@ -2,17 +2,26 @@ import * as utils from '../../../src/utils.js';
 import { getGlobal } from '../../../src/prebidGlobal.js';
 import { filters } from '../../../src/targeting.js';
 
-/** @type {Submodule} */
+/** @type {Submodule}
+ * Responsibility of this submodule is to provide mechanism for ppi to requestBids from cache
+ * If some adUnits don't have cached bids, this submodule will hold new HB auction for those adUnits
+*/
 export const cacheSourceSubmodule = {
   name: 'cache',
 
-  send(matchObjects, callback) {
+  /**
+   * process transaction objects and matched adUnits
+   * @param {(Object[])} matchObjects array of transactionObjects and matched adUnits
+   * @param {function} callback
+   */
+  requestBids(matchObjects, callback) {
     utils.logInfo('[PPI] Using bids from bid cache');
-    // Tech Spec states that we should trigger a new auction if cache is empty
+    // store match objects that don't have any bids and trigger new HB auction
     let emptyCacheMatches = [];
     let readyMatches = [];
     let pbjs = getGlobal();
     matchObjects.forEach(matchObj => {
+      // no point in holding new HB auction if transaction object didn't create any adUnit
       if (!matchObj.adUnit) {
         readyMatches.push(matchObj);
         return;
@@ -38,7 +47,6 @@ export const cacheSourceSubmodule = {
       readyMatches.push(matchObj);
     });
 
-    // send the ready matches to destination module
     if (readyMatches.length && utils.isFn(callback)) {
       callback(readyMatches);
     }
@@ -56,8 +64,4 @@ export const cacheSourceSubmodule = {
       });
     }
   },
-
-  isValid(transactionObject) {
-    return utils.deepAccess(transactionObject, 'hbDestination.type') !== 'cache';
-  }
 };

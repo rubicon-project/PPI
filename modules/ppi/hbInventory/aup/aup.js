@@ -4,6 +4,10 @@ import { TransactionType } from './consts.js';
 import { findLimitSizes, filterSizesByIntersection, isSizeValid, sortSizes, findAUPSizes } from './sizes.js';
 import { hashFnv32a, isRegex } from './utils.js';
 
+/** @type {Submodule}
+ * Responsibility of this submodule is to create pbjs adUnit for each transactionObject
+ * This is achieved with adUnitPatterns and regex matching between adUnitPatterns and transactionObjects
+*/
 export const aupInventorySubmodule = {
   name: 'AUP',
 
@@ -16,6 +20,11 @@ export const aupInventorySubmodule = {
 
 // used to track if aup matching was called before setCustomMappingFunction
 let aupsMatched = false;
+
+/**
+ * @param {(Object[])} transactionObjects
+ * @return {(Object[])} array of transactionObjects and matched adUnits
+ */
 export function createAdUnits(transactionObjects) {
   aupsMatched = true;
   let matches = [];

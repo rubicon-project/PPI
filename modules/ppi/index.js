@@ -9,7 +9,14 @@ let sourceRegistry = hbSource;
 let inventoryRegistry = hbInventory;
 
 /**
- * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
+ * requestBids for each provided transactionObject
+ * for transactionObjects create pbjs adUnits
+ * request bids from source, it can be new HB auction or pbjs cache
+ * send result to destionation, which could lead to:
+ * ad rendering on the page
+ * new bids being cached
+ * @param {(Object[])} transactionObjects
+ * @return {(Object[])} array of transactionObjects and matched adUnits
  */
 export function requestBids(transactionObjects) {
   let validationResult = validateTransactionObjects(transactionObjects);
@@ -25,7 +32,7 @@ export function requestBids(transactionObjects) {
   for (const source in groupedTransactionObjects) {
     for (const dest in groupedTransactionObjects[source]) {
       let matchObjects = inventoryRegistry.createAdUnits(groupedTransactionObjects[source][dest]);
-      sourceRegistry[source].send(matchObjects, (matches) => {
+      sourceRegistry[source].requestBids(matchObjects, (matches) => {
         destinationRegistry[dest].send(matches);
       });
 
@@ -41,6 +48,12 @@ export function requestBids(transactionObjects) {
   return transactionResult;
 }
 
+/**
+ * Validate transaction objects
+ *
+ * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
+ * @return {Object.<string, string>} array of valid and invalid transactionObjects
+ */
 export function validateTransactionObjects(transactionObjects) {
   let valid = [];
   let invalid = [];
@@ -70,12 +83,6 @@ export function validateTransactionObjects(transactionObjects) {
 
     if (!inventoryRegistry.isValid(to)) {
       to.error = 'transaction object does not have valid inventory properties';
-      invalid.push(to);
-      return;
-    }
-
-    if (!sourceRegistry[to.hbSource].isValid(to)) {
-      to.error = 'transaction object does not have valid source-destination pair';
       invalid.push(to);
       return;
     }
@@ -118,11 +125,11 @@ export function validateTransactionObjects(transactionObjects) {
 }
 
 /**
- * group transaction objects
- * @param {(Object[])} transactionObjects array of adUnit codes to refresh.
- * @return {Object.<string, string>} adUnitCode gpt slot mapping
+ * groups transaction objects
+ * @param {(Object[])} transactionObjects array of transactionObjects to group
+ * @return {Object.<string, Object.<string, string>>} slot - destination - array of transactionObjects mapping
  */
-export function groupTransactionObjects(transactionObjects) {
+function groupTransactionObjects(transactionObjects) {
   let grouped = {};
   transactionObjects.forEach((transactionObject) => {
     let srcTransObj = grouped[transactionObject.hbSource] || {};
