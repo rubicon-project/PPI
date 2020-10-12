@@ -216,7 +216,7 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
 
     let limitSizes = findLimitSizes(transactionObject);
     let aupSizes = findAUPSizes(aup);
-    if (!limitSizes || !aupSizes || !aupSizes.length) {
+    if (!limitSizes || !limitSizes.length || !aupSizes || !aupSizes.length) {
       match = true;
     } else {
       let matchingSizes = filterSizesByIntersection(aupSizes, limitSizes);

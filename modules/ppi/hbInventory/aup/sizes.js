@@ -25,15 +25,16 @@ export function findAUPSizes(aup) {
  * @return {(Object[])} array of sizes formatted [[w,h],...]
  */
 export function findLimitSizes(transactionObject) {
+  let toSizes = transactionObject.hbInventory.sizes;
   if (transactionObject.hbInventory.type === TransactionType.SLOT_OBJECT) {
-    if (transactionObject.hbInventory.sizes) {
+    if (toSizes && toSizes.length) {
       utils.logWarn(`hbInventory.sizes override is not supported for transaction type ${transactionObject.hbInventory.type}`);
     }
 
     return getGptSlotSizes(transactionObject.hbInventory.values.slot);
   }
 
-  return transactionObject.hbInventory.sizes;
+  return toSizes;
 }
 
 /**

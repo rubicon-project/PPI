@@ -38,7 +38,8 @@ export const gptDestinationSubmodule = {
         let adUnitPath = matchObj.transactionObject.slotName;
 
         let adUnitSizes = [];
-        if (Array.isArray(utils.deepAccess(matchObj, 'transactionObject.hbInventory.sizes'))) {
+        let toSizes = utils.deepAccess(matchObj, 'transactionObject.hbInventory.sizes');
+        if (Array.isArray(toSizes) && toSizes.length) {
           adUnitSizes = matchObj.transactionObject.hbInventory.sizes;
         } else if (matchObj.adUnit) {
           adUnitSizes = utils.deepAccess(matchObj.adUnit, 'mediaTypes.banner.sizes');
