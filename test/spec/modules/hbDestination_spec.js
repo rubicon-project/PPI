@@ -8,6 +8,11 @@ function makeGPTSlot(adUnitPath, divId, sizes = []) {
   let gptSlot = makeSlot({ code: adUnitPath, divId: divId });
   let sizeObj = [];
   sizes.forEach(size => {
+    if (!Array.isArray(size)) {
+      sizeObj.push(size);
+      return;
+    }
+
     sizeObj.push({
       size,
       getWidth: () => {
@@ -256,8 +261,12 @@ describe('test ppi hbDestination submodule', () => {
     window.googletag.cmd.push = (command) => {
       command.call();
     };
+    let sizesWithFluid = [[300, 250], [300, 600], 'fluid'];
     let matches = [{
       transactionObject: {
+        hbInventory: {
+          sizes: sizesWithFluid,
+        },
         divId: 'test-1',
         slotName: '/19968336/header-bid-tag-0',
         hbDestination: {
@@ -266,11 +275,6 @@ describe('test ppi hbDestination submodule', () => {
       },
       adUnit: {
         code: 'pattern-1',
-        mediaTypes: {
-          banner: {
-            sizes: [[300, 250], [300, 600]]
-          },
-        },
       },
     },
     {
@@ -293,6 +297,18 @@ describe('test ppi hbDestination submodule', () => {
 
     hbDestination['gpt'].send(matches);
     expect(slotsRefreshed).to.equal(true);
-    expect(googletag.pubads().getSlots().length).to.equal(matches.length);
+    let slots = googletag.pubads().getSlots();
+    expect(slots.length).to.equal(matches.length);
+
+    let sizes = slots[0].getSizes();
+    expect(sizes.length).to.equal(sizesWithFluid.length);
+    for (let i = 0; i < sizes.length; i++) {
+      if (Array.isArray(sizesWithFluid[i])) {
+        expect(sizes[i].getWidth()).to.equal(sizesWithFluid[i][0]);
+        expect(sizes[i].getHeight()).to.equal(sizesWithFluid[i][1]);
+        continue;
+      }
+      expect(sizes[i]).to.equal(sizesWithFluid[i]);
+    }
   });
 });
