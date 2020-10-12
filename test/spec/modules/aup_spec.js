@@ -415,6 +415,7 @@ describe('add adUnitPattern', () => {
   describe('create adUnit', () => {
     it('should create pbjs adUnit from AUP', () => {
       let sizes = [[1, 1], [1, 2], [2, 1], [2, 2]];
+      let sortedSizes = [[2, 2], [1, 2], [2, 1], [1, 1]];
       let adUnitPattern = {
         slotPattern: '^.*header-bid-tag-.*$',
         divPattern: 'test-*',
@@ -441,7 +442,7 @@ describe('add adUnitPattern', () => {
 
       let adUnit = aup.createAdUnit(adUnitPattern, to);
       expect(adUnitPattern.bids).to.deep.equal(adUnit.bids);
-      expect(sizes).to.deep.equal(utils.deepAccess(adUnit, 'mediaTypes.banner.sizes'));
+      expect(utils.deepAccess(adUnit, 'mediaTypes.banner.sizes')).to.deep.equal(sortedSizes);
       expect(adUnit.slotPattern).to.be.a('undefined');
       expect(adUnit.divPattern).to.be.a('undefined');
       expect(adUnit.code).to.be.a('string');
@@ -455,7 +456,7 @@ describe('add adUnitPattern', () => {
       utils.deepSetValue(adUnitPattern, 'mediaTypes.banner.sizes', sizes);
       to.hbInventory.sizes = [];
       adUnit = aup.createAdUnit(adUnitPattern, to);
-      expect(adUnit.mediaTypes.banner.sizes).to.deep.equal(sizes);
+      expect(adUnit.mediaTypes.banner.sizes).to.deep.equal(sortedSizes);
 
       // now do the size intersection between adUnitPattern sizes and limit sizes
       to.hbInventory.sizes = [[2, 2], [1, 1], [3, 3], [4, 4]];

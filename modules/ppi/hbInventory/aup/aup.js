@@ -88,7 +88,6 @@ export function isValid(transactionObject) {
  * @return {{Object}} adUnit
  */
 export function createAdUnit(adUnitPattern, transactionObject) {
-  // TODO: will it hurt PBJS if 'fluid' gets into ad unit MTO sizes?
   let limitSizes = findLimitSizes(transactionObject);
   let aupSizes = findAUPSizes(adUnitPattern);
   let adUnit;
@@ -106,6 +105,7 @@ export function createAdUnit(adUnitPattern, transactionObject) {
         aupSizes = filterSizesByIntersection(aupSizes, limitSizes);
       }
     }
+    aupSizes = aupSizes.filter(s => Array.isArray(s) && s.length === 2);
     utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(aupSizes));
 
     // if aup code was not published, generate one
