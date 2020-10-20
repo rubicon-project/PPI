@@ -241,7 +241,7 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
           utils.logWarn('[PPI] AdunitPattern excluded because filtered out by custom mapping function:', aup);
         }
       } catch (e) {
-          utils.logWarn('[PPI] Custom mapping function error:', e);
+        utils.logWarn('[PPI] Custom mapping function error:', e);
       }
     }
 
