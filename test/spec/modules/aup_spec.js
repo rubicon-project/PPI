@@ -5,6 +5,14 @@ import * as aupSizes from 'modules/ppi/hbInventory/aup/sizes.js'
 import { TransactionType } from 'modules/ppi/hbInventory/aup/consts.js';
 import { makeSlot } from '../integration/faker/googletag.js';
 
+const clone = function(obj) {
+  return JSON.parse(JSON.stringify(obj))
+};
+
+function getGlobal() {
+  return window.$$PREBID_GLOBAL$$;
+}
+
 function makeGPTSlot(adUnitPath, divId, sizes = []) {
   let gptSlot = makeSlot({ code: adUnitPath, divId: divId });
   let sizeObj = [];
@@ -463,6 +471,118 @@ describe('add adUnitPattern', () => {
       adUnit = aup.createAdUnit(adUnitPattern, to);
       expect(adUnit.mediaTypes.banner.sizes).to.deep.equal([[4, 4], [3, 3], [2, 2], [1, 1]]);
     });
+  });
+});
+
+describe('add MTO to adUnitPattern', () => {
+  const PBJS = getGlobal();
+  afterEach(function () {
+    delete PBJS.ppi.mtoConfigMap;
+  });
+  let adUnitPatterns = [
+    {
+      slotPattern: '^.*header-bid-tag-.*$',
+      divPattern: 'test-*',
+      code: 'pattern-1',
+      bids: [
+        {
+          bidder: 'rubicon',
+          params: {
+            accountId: '1001',
+            siteId: '113932',
+            zoneId: '535510',
+          }
+        }
+      ],
+      mtoRevId: 1234
+    },
+    {
+      slotPattern: '',
+      divPattern: 'test-*',
+      bids: [
+        {
+          bidder: 'rubicon',
+          params: {
+            accountId: '1001',
+            siteId: '113932',
+            zoneId: '535510',
+          }
+        }
+      ],
+      mtoRevId: 5678
+    }
+  ];
+
+  it('should copy MTOs to adUnitPatterns', () => {
+    let patterns = clone(adUnitPatterns);
+    PBJS.ppi.mtoConfigMap = {
+      1234: {
+        mediaTypes: {
+          banner: {
+            sizes: [[728, 90]]
+          },
+        }
+      },
+      5678: {
+        mediaTypes: {
+          banner: {
+            sizes: [[300, 250], [300, 600]]
+          },
+        }
+      }
+    }
+
+    for (let i = 0; i < patterns.length; i++) {
+      let result = aup.addMtoToPattern(patterns[i]);
+      expect(result).to.equal(true);
+    }
+
+    expect(patterns[0].mediaTypes).to.equal(PBJS.ppi.mtoConfigMap[1234].mediaTypes);
+    expect(patterns[0].mtoRevId).to.equal(undefined);
+    expect(patterns[1].mediaTypes).to.equal(PBJS.ppi.mtoConfigMap[5678].mediaTypes);
+    expect(patterns[1].mtoRevId).to.equal(undefined);
+  });
+
+  it('should fail attaching MTOs', () => {
+    let patterns = clone(adUnitPatterns);
+    PBJS.ppi.mtoConfigMap = {}
+
+    for (let i = 0; i < patterns.length; i++) {
+      let result = aup.addMtoToPattern(patterns[i]);
+      expect(result).to.equal(false);
+    }
+
+    expect(patterns[0].mediaTypes).to.equal(undefined);
+    expect(patterns[0].mtoRevId).to.equal(1234);
+    expect(patterns[1].mediaTypes).to.equal(undefined);
+    expect(patterns[1].mtoRevId).to.equal(5678);
+  });
+
+  it('should attach MTO to one pattern and fail on the second', () => {
+    let patterns = clone(adUnitPatterns);
+    PBJS.ppi.mtoConfigMap = {
+      1234: {
+        mediaTypes: {
+          banner: {
+            sizes: [[728, 90]]
+          },
+        }
+      }
+    }
+
+    for (let i = 0; i < patterns.length; i++) {
+      let result = aup.addMtoToPattern(patterns[i]);
+      if (i === 0) {
+        expect(result).to.equal(true);
+      } else {
+        expect(result).to.equal(false);
+      }
+    }
+
+    expect(patterns[0].mediaTypes).to.equal(PBJS.ppi.mtoConfigMap[1234].mediaTypes);
+    expect(patterns[0].mtoRevId).to.equal(undefined);
+    expect(patterns[1].mediaTypes).to.equal(undefined);
+    expect(patterns[1].mtoRevId).to.equal(5678);
   });
 });
 
