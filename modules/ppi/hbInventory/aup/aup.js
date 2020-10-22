@@ -210,9 +210,7 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
         return false;
     }
 
-    if (match && !aup.hasOwnProperty('mediaTypes')) {
-      match = addMtoToPattern(aup);
-    }
+    match = addMtoToPattern(aup);
 
     if (!match) {
       return false;
@@ -362,6 +360,8 @@ export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
  * @return {boolean}
  */
 export function addMtoToPattern(adUnitPattern) {
+  if (adUnitPattern.mediaTypes) return true;
+  
   let pbjs = getGlobal();
 
   try {
