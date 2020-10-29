@@ -8,14 +8,12 @@ import find from 'core-js-pure/features/array/find.js';
  * @return {(Object[])} array of sizes formatted [[w,h],...]
  */
 export function findAUPSizes(aup) {
-  let aupSizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes');
   let respSizes = utils.deepAccess(aup, 'mediaTypes.banner.responsiveSizes');
   if (respSizes && respSizes.length) {
-    let vpSizes = filterResponsiveSizes(respSizes, getViewport());
-    return filterSizesByIntersection(vpSizes, aupSizes);
+    return filterResponsiveSizes(respSizes, getViewport());
   }
 
-  return aupSizes;
+  return utils.deepAccess(aup, 'mediaTypes.banner.sizes');
 }
 
 /**

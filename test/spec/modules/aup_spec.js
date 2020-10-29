@@ -488,8 +488,8 @@ describe('responsive sizes', () => {
         banner: {
           sizes: [[300, 250], [300, 600], [160, 600]],
           responsiveSizes: [
-            { sizes: [[300, 250]], minViewPort: [0, 0] },
-            { sizes: [[160, 600]], minViewPort: [768, 200] },
+            { sizes: [[300, 250], [100, 200]], minViewPort: [0, 0] },
+            { sizes: [[160, 600], [200, 300]], minViewPort: [768, 200] },
             { sizes: [[160, 600], [300, 600]], minViewPort: [1540, 200] }
           ]
         }
@@ -498,11 +498,11 @@ describe('responsive sizes', () => {
 
     let res = aupSizes.findAUPSizes(AUP);
 
-    expect(res).to.deep.equal([[300, 250]]);
+    expect(res).to.deep.equal([[300, 250], [100, 200]]);
     viewport[0] = 770;
     res = aupSizes.findAUPSizes(AUP);
 
-    expect(res).to.deep.equal([[160, 600]]);
+    expect(res).to.deep.equal([[160, 600], [200, 300]]);
     viewport[0] = 1770;
 
     res = aupSizes.findAUPSizes(AUP);
