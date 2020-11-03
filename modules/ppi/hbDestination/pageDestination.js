@@ -28,7 +28,7 @@ export const pageDestinationSubmodule = {
         utils.logWarn('[PPI] No bid for ad unit code ', matchObj.adUnit.code);
         return;
       }
-      let targetDiv = matchObj.transactionObject.hbDestination.values.div;
+      let targetDiv = utils.deepAccess(matchObj, 'transactionObject.hbDestination.values.div') || matchObj.transactionObject.divId;
       let targetEl = document.getElementById(targetDiv);
       if (!targetEl) {
         utils.logError('[PPI] Div element not found ', targetDiv);

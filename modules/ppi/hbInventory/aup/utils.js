@@ -23,5 +23,5 @@ export function hashFnv32a(str, asString, seed) {
 }
 
 export function isRegex(str) {
-  return ['.', '*', '^', '$'].some(p => str.indexOf(p) !== -1);
+  return str && ['.', '*', '^', '$'].some(p => str.indexOf(p) !== -1);
 }
