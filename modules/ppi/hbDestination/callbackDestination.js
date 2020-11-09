@@ -25,14 +25,14 @@ export const callbackDestinationSubmodule = {
       if (!matchObj.adUnit) {
         utils.logWarn('[PPI] adUnit not created for transaction object ', matchObj.transactionObject);
         utils.logWarn('[PPI] executing callback without bids');
-        callback();
+        callback(matchObj);
         return;
       }
-      let bids = pbjs.getBidResponsesForAdUnitCode(matchObj.adUnit.code)
+      let bids = pbjs.getBidResponsesForAdUnitCode(matchObj.adUnit.code).bids
         .filter(filters.isUnusedBid)
         .filter(filters.isBidNotExpired);
 
-      callback(bids);
+      callback(matchObj, bids);
     });
   },
 };
