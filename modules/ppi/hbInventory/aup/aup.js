@@ -214,7 +214,7 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
       return false;
     }
 
-    match = addMtoToPattern(aup);
+    addMtoToPattern(aup);
 
     let limitSizes = findLimitSizes(transactionObject);
     let aupSizes = findAUPSizes(aup);
