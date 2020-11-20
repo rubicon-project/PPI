@@ -28,6 +28,17 @@
     "browsiRtdProvider",
     "haloRtdProvider",
     "jwplayerRtdProvider",
-    "reconciliationRtdProvider"
+    "reconciliationRtdProvider",
+    "audigentRtdProvider",
+    "jwplayerRtdProvider"
+  ],
+  "ppi": [
+    "cacheDestination",
+    "callbackDestination",
+    "gptDestination",
+    "pageDestination",
+    "auctionSource",
+    "cacheSource",
+    "aup"
   ]
 }
