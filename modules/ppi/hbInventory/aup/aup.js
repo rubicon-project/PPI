@@ -214,8 +214,11 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
       return false;
     }
 
+    addMtoToPattern(aup);
+
     let limitSizes = findLimitSizes(transactionObject);
     let aupSizes = findAUPSizes(aup);
+
     if (!limitSizes || !limitSizes.length || !aupSizes || !aupSizes.length) {
       match = true;
     } else {
@@ -224,15 +227,23 @@ function findMatchingAUPs(transactionObject, adUnitPatterns) {
     }
 
     if (!match) {
+      utils.logWarn('[PPI] AdunitPattern excluded because all slot sizes filtered out:', aup);
       return false;
     }
 
     // check if custom mapping function approves
     if (customMappingFunction) {
-      return customMappingFunction(transactionObject, aup);
+      try {
+        match = customMappingFunction(transactionObject, aup);
+        if (!match) {
+          utils.logWarn('[PPI] AdunitPattern excluded because filtered out by custom mapping function:', aup);
+        }
+      } catch (e) {
+        utils.logWarn('[PPI] Custom mapping function error:', e);
+      }
     }
 
-    return true;
+    return match;
   });
 }
 
@@ -341,6 +352,27 @@ export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
     name: 'gam',
     adSlot: slotName
   });
+}
+
+/**
+ * Attach MTO from config map to adUnitPattern
+ * @param {(Object[])} adUnitPattern
+ * @return {boolean}
+ */
+export function addMtoToPattern(adUnitPattern) {
+  if (adUnitPattern.mediaTypes) return true;
+
+  let pbjs = getGlobal();
+
+  try {
+    adUnitPattern.mediaTypes = pbjs.ppi.mtoConfigMap[adUnitPattern.mtoRevId].mediaTypes;
+  } catch (e) {
+    utils.logError('[PPI] Unable to resolve the mediaTypes for adUnitPattern', adUnitPattern, e);
+    return false;
+  }
+  delete adUnitPattern.mtoRevId;
+
+  return true;
 }
 
 /**
