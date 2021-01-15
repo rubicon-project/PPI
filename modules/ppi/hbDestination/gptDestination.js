@@ -111,14 +111,8 @@ function validateExistingSlot(gptSlot, adUnitPath, adUnitSizes, divId) {
     return diff
   }
 
-  let extraGPTSizes = difference(gptSlotSizes, adUnitSizes);
-  let extraAdUnitSizes = difference(adUnitSizes, gptSlotSizes);
-
-  extraGPTSizes = Array.from(extraGPTSizes).join(' ');
-  extraAdUnitSizes = Array.from(extraAdUnitSizes).join(' ');
-
-  if (extraGPTSizes || extraAdUnitSizes) {
-    utils.logError(`[PPI] target div '${divId}' contains slot with incompatible sizes, extra GPT sizes: ${extraGPTSizes}, extra Ad Unit sizes: ${extraAdUnitSizes}`);
+  if (difference(gptSlotSizes, adUnitSizes) || difference(adUnitSizes, gptSlotSizes)) {
+    utils.logError(`[PPI] target div '${divId}' contains slot that has different sizes than pbjs Ad Unit. Slot sizes: [${gptSlotSizes}], pbjs Ad Unit sizes: [${adUnitSizes}]. Check your pbjs Ad Unit configuration and gpt slot definition.`);
   }
 }
 
