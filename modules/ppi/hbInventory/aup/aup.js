@@ -338,8 +338,8 @@ function getSlotName(transactionObject, adUnitPattern) {
  * @param {(Object)} transactionObject
  */
 export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
-  if (transactionObject.hbInventory.fpd) {
-    adUnit.fpd = transactionObject.hbInventory.fpd;
+  if (transactionObject.hbInventory.ortb2Imp) {
+    adUnit.ortb2Imp = transactionObject.hbInventory.ortb2Imp;
   }
 
   let slotName = getSlotName(transactionObject, adUnitPattern);
@@ -347,8 +347,8 @@ export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
     return;
   }
 
-  utils.deepSetValue(adUnit, 'fpd.context.pbAdSlot', slotName);
-  utils.deepSetValue(adUnit, 'fpd.context.adServer', {
+  utils.deepSetValue(adUnit, 'ortb2Imp.ext.data.pbAdSlot', slotName);
+  utils.deepSetValue(adUnit, 'ortb2Imp.ext.data.adServer', {
     name: 'gam',
     adSlot: slotName
   });
@@ -403,7 +403,7 @@ export function transformAutoSlots(transactionObject) {
         values: {
           slot: gptSlot,
         },
-        fpd: transactionObject.hbInventory.fpd,
+        ortb2Imp: transactionObject.hbInventory.ortb2Imp,
       },
       hbSource: transactionObject.hbSource,
       hbDestination: transactionObject.hbDestination,
