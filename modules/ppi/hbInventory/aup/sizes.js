@@ -13,7 +13,11 @@ export function findAUPSizes(aup) {
     return filterResponsiveSizes(respSizes, getViewport());
   }
 
-  return utils.deepAccess(aup, 'mediaTypes.banner.sizes');
+  let sizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes') || utils.deepAccess(aup, 'mediaTypes.video.playerSize');
+
+  if (sizes && sizes.length && !Array.isArray(sizes[0])) sizes = [sizes];
+
+  return sizes;
 }
 
 /**
