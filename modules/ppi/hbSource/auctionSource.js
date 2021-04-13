@@ -18,10 +18,10 @@ export const auctionSourceSubmodule = {
 
     getGlobal().requestBids({
       adUnits: matchObjects.filter(mo => mo.adUnit).map(mo => mo.adUnit),
-      bidsBackHandler: (bids) => {
+      bidsBackHandler: (bids, timedOut, auctionId) => {
         utils.logInfo('[PPI] - bids from bidsBackHandler: ', bids);
         if (utils.isFn(callback)) {
-          callback(matchObjects);
+          callback(matchObjects, timedOut, auctionId);
         }
       }
     });

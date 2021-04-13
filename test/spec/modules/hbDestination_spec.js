@@ -137,31 +137,38 @@ describe('test ppi hbDestination submodule', () => {
     });
 
     let match = utils.deepClone(matches);
+    let id = utils.getUniqueIdentifierStr();
     match[0].transactionObject.hbDestination = {
       type: 'callback',
       values: {
-        callback: (matchObj, bids) => {
+        callback: (matchObj, bids, timedOut, auctionId) => {
           expect(matchObj).to.equal(match[0]);
           expect(bids).to.be.a('undefined');
+          expect(timedOut).to.be.a('undefined');
+          expect(auctionId).to.be.a('undefined');
         }
       }
     };
     match[1].transactionObject.hbDestination = {
       type: 'callback',
       values: {
-        callback: (matchObj, bids) => {
+        callback: (matchObj, bids, timedOut, auctionId) => {
           expect(matchObj).to.equal(match[1]);
           expect(bids.length).to.equal(1);
           expect(bids[0].cpm).to.equal(1.69);
+          expect(timedOut).to.equal(false);
+          expect(auctionId).to.equal(id);
         }
       }
     };
     match[2].transactionObject.hbDestination = {
       type: 'callback',
       values: {
-        callback: (matchObj, bids) => {
+        callback: (matchObj, bids, timedOut, auctionId) => {
           expect(matchObj).to.equal(match[2]);
           expect(bids).to.deep.equal([]);
+          expect(timedOut).to.equal(false);
+          expect(auctionId).to.equal(id);
         }
       }
     };
@@ -172,7 +179,7 @@ describe('test ppi hbDestination submodule', () => {
       }
     };
 
-    hbDestination['callback'].send(match);
+    hbDestination['callback'].send(match, false, id);
   });
 
   it('gpt destination should process result with existing slots', () => {

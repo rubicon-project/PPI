@@ -55,10 +55,10 @@ export const cacheSourceSubmodule = {
     if (emptyCacheMatches.length) {
       pbjs.requestBids({
         adUnits: emptyCacheMatches.filter(mo => mo.adUnit).map(mo => mo.adUnit),
-        bidsBackHandler: (bids) => {
+        bidsBackHandler: (bids, timedOut, auctionId) => {
           utils.logInfo('[PPI] - bids from bidsBackHandler: ', bids);
           if (utils.isFn(callback)) {
-            callback(emptyCacheMatches);
+            callback(emptyCacheMatches, timedOut, auctionId);
           }
         }
       });

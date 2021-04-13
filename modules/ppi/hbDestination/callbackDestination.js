@@ -14,7 +14,7 @@ export const callbackDestinationSubmodule = {
    * @param {(Object[])} matchObjects array of transactionObjects and matched adUnits
    * @param {function} callback
    */
-  send(matchObjects) {
+  send(matchObjects, timedOut, auctionId) {
     let pbjs = getGlobal();
     matchObjects.forEach(matchObj => {
       let callback = utils.deepAccess(matchObj, 'transactionObject.hbDestination.values.callback');
@@ -32,7 +32,7 @@ export const callbackDestinationSubmodule = {
         .filter(filters.isUnusedBid)
         .filter(filters.isBidNotExpired);
 
-      callback(matchObj, bids);
+      callback(matchObj, bids, timedOut, auctionId);
     });
   },
 };
