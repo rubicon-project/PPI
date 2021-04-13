@@ -106,6 +106,8 @@ export function createAdUnit(adUnitPattern, transactionObject) {
       }
     }
     aupSizes = aupSizes.filter(s => Array.isArray(s) && s.length === 2);
+    
+    if (utils.deepAccess(adUnit, 'mediaTypes.banner')) utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(aupSizes));
     utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(aupSizes));
 
     // if aup code was not published, generate one
