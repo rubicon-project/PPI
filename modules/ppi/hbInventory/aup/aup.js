@@ -106,7 +106,10 @@ export function createAdUnit(adUnitPattern, transactionObject) {
       }
     }
     aupSizes = aupSizes.filter(s => Array.isArray(s) && s.length === 2);
-    utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(aupSizes));
+
+    if (utils.deepAccess(adUnit, 'mediaTypes.banner') || !utils.deepAccess(adUnit, 'mediaTypes.video')) {
+      utils.deepSetValue(adUnit, 'mediaTypes.banner.sizes', sortSizes(aupSizes));
+    }
 
     // if aup code was not published, generate one
     if (!adUnit.code) {
@@ -338,8 +341,8 @@ function getSlotName(transactionObject, adUnitPattern) {
  * @param {(Object)} transactionObject
  */
 export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
-  if (transactionObject.hbInventory.fpd) {
-    adUnit.fpd = transactionObject.hbInventory.fpd;
+  if (transactionObject.hbInventory.ortb2Imp) {
+    adUnit.ortb2Imp = transactionObject.hbInventory.ortb2Imp;
   }
 
   let slotName = getSlotName(transactionObject, adUnitPattern);
@@ -347,8 +350,8 @@ export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
     return;
   }
 
-  utils.deepSetValue(adUnit, 'fpd.context.pbAdSlot', slotName);
-  utils.deepSetValue(adUnit, 'fpd.context.adServer', {
+  utils.deepSetValue(adUnit, 'ortb2Imp.ext.data.pbAdSlot', slotName);
+  utils.deepSetValue(adUnit, 'ortb2Imp.ext.data.adServer', {
     name: 'gam',
     adSlot: slotName
   });
@@ -403,7 +406,7 @@ export function transformAutoSlots(transactionObject) {
         values: {
           slot: gptSlot,
         },
-        fpd: transactionObject.hbInventory.fpd,
+        ortb2Imp: transactionObject.hbInventory.ortb2Imp,
       },
       hbSource: transactionObject.hbSource,
       hbDestination: transactionObject.hbDestination,

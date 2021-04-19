@@ -1,6 +1,7 @@
 import { getGlobal } from '../../../src/prebidGlobal.js';
 import * as utils from '../../../src/utils.js';
 import { filters } from '../../../src/targeting.js';
+import { config } from '../../../src/config.js';
 
 /** @type {Submodule}
  * Responsibility of this submodule is to provide mechanism for ppi to execute custom callback for each transactionObject
@@ -31,6 +32,13 @@ export const callbackDestinationSubmodule = {
       let bids = pbjs.getBidResponsesForAdUnitCode(matchObj.adUnit.code).bids
         .filter(filters.isUnusedBid)
         .filter(filters.isBidNotExpired);
+      
+      if (bids.length && !config.getConfig('useBidCache')) {
+        // find the last auction id to get responses for the most recent auction only
+        const latestBid = bids.reduce((prev, current) => (prev.requestTimestamp > current.requestTimestamp) ? prev : current);
+        const latestAuctionId = latestBid.auctionId;
+        bids = bids.filter(bid => bid.auctionId === latestAuctionId)
+      }
 
       callback(matchObj, bids, timedOut, auctionId);
     });
