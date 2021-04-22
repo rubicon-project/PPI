@@ -630,3 +630,87 @@ describe('responsive sizes', () => {
     expect(res).to.deep.equal([[160, 600], [300, 600]]);
   });
 });
+
+describe('findLimitSizes', () => {
+  it('should return list of valid sizes on slot', () => {
+    let TO = {
+      hbInventory: {
+        type: TransactionType.SLOT_OBJECT,
+        values: {
+          slot: makeGPTSlot('1111/slot', 'test-div', [[300, 250], [300, 600]])
+        }
+      },
+      hbSource: 'auction',
+      hbDestination: {
+        type: 'callback',
+        values: { callback: function() {} }
+      }
+    };
+
+    let result = aupSizes.findLimitSizes(TO);
+
+    expect(result).to.deep.equal([[300, 250], [300, 600]]);
+  });
+
+  it('should convert false sizes on slot to auction size', () => {
+    let TO = {
+      hbInventory: {
+        type: TransactionType.SLOT_OBJECT,
+        values: {
+          slot: makeGPTSlot('1111/slot', 'test-div', [[300, 251], [300, 601]])
+        }
+      },
+      hbSource: 'auction',
+      hbDestination: {
+        type: 'callback',
+        values: { callback: function() {} }
+      }
+    };
+
+    let result = aupSizes.findLimitSizes(TO);
+
+    expect(result).to.deep.equal([[300, 250], [300, 600]]);
+  });
+
+  it('should ignore sizes defined in hbInventory', () => {
+    let TO = {
+      hbInventory: {
+        type: TransactionType.SLOT_OBJECT,
+        values: {
+          slot: makeGPTSlot('1111/slot', 'test-div', [[300, 250], [300, 600]])
+        },
+        sizes: [[728, 90]]
+      },
+      hbSource: 'auction',
+      hbDestination: {
+        type: 'callback',
+        values: { callback: function() {} }
+      }
+    };
+
+    let result = aupSizes.findLimitSizes(TO);
+
+    expect(result).to.deep.equal([[300, 250], [300, 600]]);
+  });
+
+  it('should return sizes defined in hbInventory', () => {
+    let TO = {
+      hbInventory: {
+        type: TransactionType.SLOT,
+        values: {
+          name: '1111/slot'
+        },
+        sizes: [[728, 90]]
+      },
+      hbSource: 'auction',
+      hbDestination: {
+        type: 'callback',
+        values: { callback: function() {} }
+      }
+    };
+
+    let result = aupSizes.findLimitSizes(TO);
+
+    expect(result).to.deep.equal([[728, 90]]);
+  });
+});

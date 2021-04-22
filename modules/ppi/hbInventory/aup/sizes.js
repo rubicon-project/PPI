@@ -2,6 +2,18 @@ import * as utils from '../../../../src/utils.js';
 import { TransactionType } from './consts.js';
 import find from 'core-js-pure/features/array/find.js';
 
+// List of GPT slot object false sizes to map to auction sizes
+let FALSE_SIZES = {
+  '300x251': [300, 250],
+  '300x252': [300, 250],
+  '300x601': [300, 600],
+  '300x602': [300, 600],
+  '160x601': [160, 600],
+  '728x91': [728, 90],
+  '728x92': [728, 90],
+  '970x91': [970, 90],
+};
+
 /**
  * Find sizes for given adUnitPattern
  * @param {{Object}} aup - adUnitPattern
@@ -57,6 +69,10 @@ function getGptSlotSizes(gptSlot) {
     }
     return true;
   }).map((gptSlotSize) => {
+    let size = `${gptSlotSize.getWidth()}x${gptSlotSize.getHeight()}`;
+
+    if (FALSE_SIZES[size]) return FALSE_SIZES[size];
+
     return [
       gptSlotSize.getWidth(),
       gptSlotSize.getHeight()
