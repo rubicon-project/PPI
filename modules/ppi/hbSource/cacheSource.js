@@ -73,14 +73,8 @@ export const cacheSourceSubmodule = {
 
           // add matchObject.values and log the latest auction
           emptyCacheMatches.forEach(mo => {
-            if (!mo.adUnit) {
-              return;
-            }
-
             let auBids = bids && bids[mo.adUnit.code] && bids[mo.adUnit.code].bids;
-            if (cacheSourceSubmodule.auctionTracker) {
-              cacheSourceSubmodule.auctionTracker.setLatestAuction(mo.adUnit.code, auBids, timedOut, auctionId);
-            }
+            auctionTracker.setLatestAuction(mo.adUnit.code, auBids, timedOut, auctionId);
 
             mo.values = {
               bids: auBids,
