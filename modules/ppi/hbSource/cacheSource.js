@@ -19,7 +19,7 @@ export const cacheSourceSubmodule = {
   requestBids(matchObjects, callback) {
     let cachingEnabled = config.getConfig('useBidCache');
     if (!cachingEnabled) {
-      utils.logError('[PPI] Enable bid caching (useBidCache: true) to use the cache source module!');
+      utils.logWarn('[PPI] Enable bid caching (useBidCache: true) to use the cache source module!');
     }
 
     utils.logInfo('[PPI] Using bids from bid cache');
