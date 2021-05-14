@@ -248,7 +248,7 @@ describe('add adUnitPattern', () => {
       ],
       mediaTypes: {
         banner: {
-          sizes: [[1, 1]]
+          sizes: [[1, 1], [3, 3]]
         },
       },
     },
@@ -369,10 +369,13 @@ describe('add adUnitPattern', () => {
     let gptSlotSizes = [[1, 1], [2, 2]];
     let gptSlot = makeGPTSlot('/19968336/header-bid-tag-1', 'test-3', gptSlotSizes);
 
+    let sizesOverride = [[3, 3], [2, 2], [1, 1]];
+
     let tos = [
       {
         hbInventory: {
           type: TransactionType.DIV,
+          sizes: sizesOverride,
           values: {
             name: 'test-1',
           }
@@ -386,12 +389,12 @@ describe('add adUnitPattern', () => {
       {
         hbInventory: {
           type: TransactionType.SLOT,
+          sizes: sizesOverride,
           values: {
             name: '/19968336/header-bid-tag-0',
           }
         },
         hbSource: 'auction',
-        sizes: [[1, 1]],
         hbDestination: {
           type: 'gpt',
           values: { div: 'test-2' }
@@ -400,6 +403,7 @@ describe('add adUnitPattern', () => {
       {
         hbInventory: {
           type: TransactionType.SLOT_OBJECT,
+          sizes: sizesOverride,
           values: {
             slot: gptSlot,
           }
@@ -418,6 +422,9 @@ describe('add adUnitPattern', () => {
     expect(result[0].adUnit.code).to.equal('pattern-1');
     expect(result[1].adUnit.code).to.equal('pattern-2');
     expect(result[2].adUnit.code).to.be.a('string');
+    expect(result[0].adUnit.mediaTypes.banner.sizes).to.deep.equal(sizesOverride);
+    expect(result[1].adUnit.mediaTypes.banner.sizes).to.deep.equal(sizesOverride);
+    expect(result[2].adUnit.mediaTypes.banner.sizes).to.deep.equal([[3, 3], [1, 1]]);
   });
 
   describe('create adUnit', () => {

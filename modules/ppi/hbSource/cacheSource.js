@@ -1,6 +1,8 @@
 import * as utils from '../../../src/utils.js';
 import { getGlobal } from '../../../src/prebidGlobal.js';
 import { filters } from '../../../src/targeting.js';
+import { config } from '../../../src/config.js';
+import { auctionTracker } from './auctionTracker.js';
 
 /** @type {Submodule}
  * Responsibility of this submodule is to provide mechanism for ppi to requestBids from cache
@@ -15,6 +17,11 @@ export const cacheSourceSubmodule = {
    * @param {function} callback
    */
   requestBids(matchObjects, callback) {
+    let cachingEnabled = config.getConfig('useBidCache');
+    if (!cachingEnabled) {
+      utils.logWarn('[PPI] Enable bid caching (useBidCache: true) to use the cache source module!');
+    }
+
     utils.logInfo('[PPI] Using bids from bid cache');
     // store match objects that don't have any bids and trigger new HB auction
     let emptyCacheMatches = [];
@@ -44,6 +51,12 @@ export const cacheSourceSubmodule = {
         return;
       }
 
+      matchObj.values = auctionTracker.getLatestAuction(matchObj.adUnit.code) || {};
+      if (cachingEnabled) {
+        // attach all bids from bid cache
+        matchObj.values.bids = bids;
+      }
+
       readyMatches.push(matchObj);
     });
 
@@ -55,8 +68,21 @@ export const cacheSourceSubmodule = {
     if (emptyCacheMatches.length) {
       pbjs.requestBids({
         adUnits: emptyCacheMatches.filter(mo => mo.adUnit).map(mo => mo.adUnit),
-        bidsBackHandler: (bids) => {
+        bidsBackHandler: (bids, timedOut, auctionId) => {
           utils.logInfo('[PPI] - bids from bidsBackHandler: ', bids);
+
+          // add matchObject.values and log the latest auction
+          emptyCacheMatches.forEach(mo => {
+            let auBids = bids && bids[mo.adUnit.code] && bids[mo.adUnit.code].bids;
+            auctionTracker.setLatestAuction(mo.adUnit.code, auBids, timedOut, auctionId);
+
+            mo.values = {
+              bids: auBids,
+              timedOut: timedOut,
+              auctionId: auctionId,
+            };
+          });
+
           if (utils.isFn(callback)) {
             callback(emptyCacheMatches);
           }

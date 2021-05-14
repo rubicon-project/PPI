@@ -13,7 +13,11 @@ export function findAUPSizes(aup) {
     return filterResponsiveSizes(respSizes, getViewport());
   }
 
-  return utils.deepAccess(aup, 'mediaTypes.banner.sizes');
+  let sizes = utils.deepAccess(aup, 'mediaTypes.banner.sizes') || utils.deepAccess(aup, 'mediaTypes.video.playerSize');
+
+  if (sizes && sizes.length && !Array.isArray(sizes[0])) sizes = [sizes];
+
+  return sizes;
 }
 
 /**
@@ -25,11 +29,12 @@ export function findAUPSizes(aup) {
 export function findLimitSizes(transactionObject) {
   let toSizes = transactionObject.hbInventory.sizes;
   if (transactionObject.hbInventory.type === TransactionType.SLOT_OBJECT) {
-    if (toSizes && toSizes.length) {
-      utils.logWarn(`hbInventory.sizes override is not supported for transaction type ${transactionObject.hbInventory.type}`);
+    let gptSizes = getGptSlotSizes(transactionObject.hbInventory.values.slot);
+    if (!toSizes || !toSizes.length) {
+      return gptSizes
     }
 
-    return getGptSlotSizes(transactionObject.hbInventory.values.slot);
+    utils.logWarn(`slot defined with sizes: ${gptSizes}. Using sizes override: ${toSizes}`);
   }
 
   return toSizes;

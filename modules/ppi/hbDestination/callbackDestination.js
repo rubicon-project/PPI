@@ -1,6 +1,4 @@
-import { getGlobal } from '../../../src/prebidGlobal.js';
 import * as utils from '../../../src/utils.js';
-import { filters } from '../../../src/targeting.js';
 
 /** @type {Submodule}
  * Responsibility of this submodule is to provide mechanism for ppi to execute custom callback for each transactionObject
@@ -15,24 +13,18 @@ export const callbackDestinationSubmodule = {
    * @param {function} callback
    */
   send(matchObjects) {
-    let pbjs = getGlobal();
     matchObjects.forEach(matchObj => {
       let callback = utils.deepAccess(matchObj, 'transactionObject.hbDestination.values.callback');
       if (!utils.isFn(callback)) {
         utils.logError('[PPI] Callback is not a function ', callback);
         return;
       }
+
       if (!matchObj.adUnit) {
         utils.logWarn('[PPI] adUnit not created for transaction object ', matchObj.transactionObject);
-        utils.logWarn('[PPI] executing callback without bids');
-        callback(matchObj);
-        return;
       }
-      let bids = pbjs.getBidResponsesForAdUnitCode(matchObj.adUnit.code).bids
-        .filter(filters.isUnusedBid)
-        .filter(filters.isBidNotExpired);
 
-      callback(matchObj, bids);
+      callback(matchObj);
     });
   },
 };

@@ -132,36 +132,29 @@ describe('test ppi hbDestination submodule', () => {
   });
 
   it('callback destination should process result', () => {
-    sandbox.stub($$PREBID_GLOBAL$$, 'getBidResponsesForAdUnitCode').callsFake((key) => {
-      return { bids: adUnitBids[key] || [] };
-    });
-
     let match = utils.deepClone(matches);
     match[0].transactionObject.hbDestination = {
       type: 'callback',
       values: {
-        callback: (matchObj, bids) => {
+        callback: (matchObj) => {
           expect(matchObj).to.equal(match[0]);
-          expect(bids).to.be.a('undefined');
+          expect(matchObj.values).to.be.a('undefined');
         }
       }
     };
     match[1].transactionObject.hbDestination = {
       type: 'callback',
       values: {
-        callback: (matchObj, bids) => {
+        callback: (matchObj) => {
           expect(matchObj).to.equal(match[1]);
-          expect(bids.length).to.equal(1);
-          expect(bids[0].cpm).to.equal(1.69);
         }
       }
     };
     match[2].transactionObject.hbDestination = {
       type: 'callback',
       values: {
-        callback: (matchObj, bids) => {
+        callback: (matchObj) => {
           expect(matchObj).to.equal(match[2]);
-          expect(bids).to.deep.equal([]);
         }
       }
     };
