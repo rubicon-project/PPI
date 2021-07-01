@@ -1,5 +1,5 @@
 export const TransactionType = {
-  SLOT: 'AUPSlotName',
+  SLOT: 'AUPSlotPath',
   DIV: 'AUPDivID',
   SLOT_OBJECT: 'AUPSlotObject',
   AUTO_SLOTS: 'AUPAutoSlots',

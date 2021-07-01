@@ -113,7 +113,7 @@ function validateExistingSlot(gptSlot, adUnitPath, adUnitSizes, divId) {
   }
 
   if (hasDifference(gptSlotSizes, adUnitSizes) || hasDifference(adUnitSizes, gptSlotSizes)) {
-    utils.logError(`[PPI] target div '${divId}' contains slot that has different sizes than pbjs Ad Unit. Slot sizes: [${gptSlotSizes}], pbjs Ad Unit sizes: [${adUnitSizes}]. Check your pbjs Ad Unit configuration and gpt slot definition.`);
+    utils.logWarn(`[PPI] target div '${divId}' contains slot that has different sizes than pbjs Ad Unit. Slot sizes: [${gptSlotSizes}], pbjs Ad Unit sizes: [${adUnitSizes}]. Check your pbjs Ad Unit configuration and gpt slot definition.`);
   }
 }
 

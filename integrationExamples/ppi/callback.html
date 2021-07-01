@@ -139,12 +139,14 @@
             window.transactionObjects = [
                 {
                     hbInventory: {
-                        type: 'AUPSlotName',
+                        type: 'AUPSlotPath',
                         values: {
                             name: '/19968336/header-bid-tag-0',
                         },
                     },
-                    hbSource: 'auction',
+                    hbSource: {
+                        type: 'auction',
+                    },
                     hbDestination: {
                         type: 'gpt',
                         values: { div: 'test-1' }
@@ -157,7 +159,9 @@
                             name: 'test-2',
                         },
                     },
-                    hbSource: 'auction',
+                    hbSource: {
+                        type: 'auction',
+                    },
                     hbDestination: {
                         type: 'gpt',
                         values: { div: 'test-2' }
@@ -240,12 +244,14 @@
         window.transactionToCache = [
             {
                 hbInventory: {
-                    type: 'AUPSlotName',
+                    type: 'AUPSlotPath',
                     values: {
                         name: '/19968336/header-bid-tag-0',
                     },
                 },
-                hbSource: 'auction',
+                hbSource: {
+                    type: 'auction',
+                },
                 sizes: [[300, 250]],
                 hbDestination: {
                     type: 'cache',
@@ -258,7 +264,9 @@
                         name: 'test-4',
                     },
                 },
-                hbSource: 'auction',
+                hbSource: {
+                    type: 'auction',
+                },
                 sizes: [[300, 250]],
                 hbDestination: {
                     type: 'cache',
@@ -289,12 +297,14 @@
         window.transactionFromCacheToCallback = [
             {
                 hbInventory: {
-                    type: 'AUPSlotName',
+                    type: 'AUPSlotPath',
                     values: {
                         name: '/19968336/header-bid-tag-0',
                     },
                 },
-                hbSource: 'cache',
+                hbSource: {
+                    type: 'cache',
+                },
                 sizes: [[300, 600]],
                 hbDestination: {
                     type: 'callback',
@@ -308,7 +318,9 @@
                         name: 'test-4',
                     },
                 },
-                hbSource: 'cache',
+                hbSource: {
+                    type: 'cache',
+                },
                 sizes: [[300, 600]],
                 hbDestination: {
                     type: 'callback',
@@ -321,8 +333,11 @@
             {
                 hbInventory: {
                     type: 'AUPAutoSlots',
+                    sizes: [[300, 250]],
                 },
-                hbSource: 'auction',
+                hbSource: {
+                    type: 'auction',
+                },
                 hbDestination: {
                     type: 'gpt',
                 }
