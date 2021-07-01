@@ -38,7 +38,9 @@ describe('autoSlot transformation', () => {
     hbInventory: {
       type: TransactionType.AUTO_SLOTS,
     },
-    hbSource: 'auction',
+    hbSource: {
+      type: 'auction',
+    },
     hbDestination: {
       type: 'cache',
     }
@@ -50,7 +52,7 @@ describe('autoSlot transformation', () => {
     expect(transformed.length).to.equal(0);
   });
 
-  it('should transform autoSlot into array of slot objects', () => {
+  it('should transform AUPAutoSlots into array of slot objects', () => {
     window.googletag.pubads().setSlots([]);
     const testSlots = [
       makeSlot({ code: 'slotCode1', divId: 'div1' }),
@@ -63,7 +65,7 @@ describe('autoSlot transformation', () => {
       let transformedTO = transformed[i];
 
       // source and destination should be copied from original TO
-      expect(transformedTO.hbSource).to.equal(to.hbSource);
+      expect(transformedTO.hbSource.type).to.equal(to.hbSource.type);
       expect(transformedTO.hbDestination.type).to.equal(to.hbDestination.type);
 
       expect(transformedTO.hbInventory.values.slot.getAdUnitPath()).to.equal(testSlots[i].getAdUnitPath());
@@ -263,7 +265,9 @@ describe('add adUnitPattern', () => {
             name: 'test-1',
           }
         },
-        hbSource: 'auction',
+        hbSource: {
+          type: 'auction',
+        },
         hbDestination: {
           type: 'gpt',
           values: { div: 'test-1' }
@@ -276,7 +280,9 @@ describe('add adUnitPattern', () => {
             name: '/19968336/header-bid-tag-0',
           }
         },
-        hbSource: 'auction',
+        hbSource: {
+          type: 'auction',
+        },
         sizes: [[1, 1]],
         hbDestination: {
           type: 'gpt',
@@ -290,7 +296,9 @@ describe('add adUnitPattern', () => {
             name: '/19968336/header-bid-tag-0',
           }
         },
-        hbSource: 'auction',
+        hbSource: {
+          type: 'auction',
+        },
         hbDestination: {
           type: 'gpt',
           values: { div: 'test-3' }
@@ -307,8 +315,8 @@ describe('add adUnitPattern', () => {
       expect(tos[i]).to.equal(result[i].transactionObject);
     }
     for (let i = 0; i < result.length - 1; i++) {
-      expect(adUnitPatterns[i].hbSource).to.equal(result[i].adUnitPattern.hbSource);
-      expect(adUnitPatterns[i].hbDestination).to.deep.equal(result[i].adUnitPattern.hbDestination);
+      expect(tos[i].hbSource).to.equal(result[i].transactionObject.hbSource);
+      expect(tos[i].hbDestination).to.deep.equal(result[i].transactionObject.hbDestination);
     }
     expect(result[2].adUnitPattern).to.be.a('undefined');
   });
@@ -331,7 +339,9 @@ describe('add adUnitPattern', () => {
             slot: gptSlots[0],
           }
         },
-        hbSource: 'auction',
+        hbSource: {
+          type: 'auction',
+        },
         hbDestination: {
           type: 'gpt',
           values: { div: 'test-1' }
@@ -344,7 +354,9 @@ describe('add adUnitPattern', () => {
             slot: gptSlots[1],
           }
         },
-        hbSource: 'auction',
+        hbSource: {
+          type: 'auction',
+        },
         sizes: [[1, 1]],
         hbDestination: {
           type: 'cache',
@@ -356,9 +368,9 @@ describe('add adUnitPattern', () => {
     aup.addAdUnitPatterns(adUnitPatterns);
     let result = aup.matchAUPs(tos, aup.adUnitPatterns);
     expect(tos.length).to.equal(result.length);
-    for (let i = 0; i < result.length - 1; i++) {
-      expect(adUnitPatterns[i].hbSource).to.equal(result[i].adUnitPattern.hbSource);
-      expect(adUnitPatterns[i].hbDestination).to.deep.equal(result[i].adUnitPattern.hbDestination);
+    for (let i = 0; i < result.length; i++) {
+      expect(tos[i].hbSource).to.equal(result[i].transactionObject.hbSource);
+      expect(tos[i].hbDestination).to.deep.equal(result[i].transactionObject.hbDestination);
     }
   });
 
@@ -380,7 +392,9 @@ describe('add adUnitPattern', () => {
             name: 'test-1',
           }
         },
-        hbSource: 'auction',
+        hbSource: {
+          type: 'auction',
+        },
         hbDestination: {
           type: 'gpt',
           values: { div: 'test-1' }
@@ -394,7 +408,9 @@ describe('add adUnitPattern', () => {
             name: '/19968336/header-bid-tag-0',
           }
         },
-        hbSource: 'auction',
+        hbSource: {
+          type: 'auction',
+        },
         hbDestination: {
           type: 'gpt',
           values: { div: 'test-2' }
@@ -408,7 +424,9 @@ describe('add adUnitPattern', () => {
             slot: gptSlot,
           }
         },
-        hbSource: 'auction',
+        hbSource: {
+          type: 'auction',
+        },
         hbDestination: {
           type: 'gpt',
           values: { div: 'test-3' }

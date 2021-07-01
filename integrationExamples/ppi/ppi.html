@@ -122,36 +122,42 @@
     </script>
     <script>
         window.pbjs.que.push(() => {
-            window.transactionObjects = [
-                {
-                    hbInventory: {
-                        type: 'AUPSlotName',
-                        values: {
-                            name: '/19968336/header-bid-tag-0',
+            window.googletag.cmd.push(() => {
+                window.transactionObjects = [
+                    {
+                        hbInventory: {
+                            type: 'AUPSlotObject',
+                            values: {
+                                slot: window.initialSlots[0],
+                            },
                         },
-                    },
-                    hbSource: 'auction',
-                    hbDestination: {
-                        type: 'gpt',
-                        values: { div: 'test-1' }
-                    }
-                },
-                {
-                    hbInventory: {
-                        type: 'AUPDivID',
-                        values: {
-                            name: 'test-2',
+                        hbSource: {
+                            type: 'auction',
                         },
+                        hbDestination: {
+                            type: 'gpt',
+                            values: { div: 'test-1' }
+                        }
                     },
-                    hbSource: 'auction',
-                    hbDestination: {
-                        type: 'gpt',
-                        values: { div: 'test-2' }
-                    }
-                },
+                    {
+                        hbInventory: {
+                            type: 'AUPDivID',
+                            values: {
+                                name: 'test-2',
+                            },
+                        },
+                        hbSource: {
+                            type: 'auction',
+                        },
+                        hbDestination: {
+                            type: 'gpt',
+                            values: { div: 'test-2' }
+                        }
+                    },
 
-            ];
-            pbjs.ppi.requestBids(window.transactionObjects);
+                ];
+                pbjs.ppi.requestBids(window.transactionObjects);
+            });
         });
     </script>
 
@@ -226,13 +232,15 @@
         window.transactionToCache = [
             {
                 hbInventory: {
-                    type: 'AUPSlotName',
+                    type: 'AUPSlotPath',
                     values: {
                         name: '/19968336/header-bid-tag-0',
                     },
+                    sizes: [[300, 250]],
                 },
-                hbSource: 'auction',
-                sizes: [[300, 250]],
+                hbSource: {
+                    type: 'auction',
+                },
                 hbDestination: {
                     type: 'cache',
                 }
@@ -243,9 +251,11 @@
                     values: {
                         name: 'test-4',
                     },
+                    sizes: [[300, 250]],
                 },
-                hbSource: 'auction',
-                sizes: [[300, 250]],
+                hbSource: {
+                    type: 'auction',
+                },
                 hbDestination: {
                     type: 'cache',
                 }
@@ -255,13 +265,15 @@
         window.transactionFromCache = [
             {
                 hbInventory: {
-                    type: 'AUPSlotName',
+                    type: 'AUPSlotPath',
                     values: {
                         name: '/19968336/header-bid-tag-0',
                     },
+                    sizes: [[300, 600]],
                 },
-                hbSource: 'cache',
-                sizes: [[300, 600]],
+                hbSource: {
+                    type: 'cache',
+                },
                 hbDestination: {
                     type: 'gpt',
                     values: { div: 'test-3' }
@@ -273,9 +285,11 @@
                     values: {
                         name: 'test-4',
                     },
+                    sizes: [[300, 600]],
                 },
-                hbSource: 'cache',
-                sizes: [[300, 600]],
+                hbSource: {
+                    type: 'cache',
+                },
                 hbDestination: {
                     type: 'gpt',
                     values: { div: 'test-4' }
@@ -288,7 +302,9 @@
                 hbInventory: {
                     type: 'AUPAutoSlots',
                 },
-                hbSource: 'auction',
+                hbSource: {
+                    type: 'auction',
+                },
                 hbDestination: {
                     type: 'gpt',
                 }

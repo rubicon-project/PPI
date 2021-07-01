@@ -70,8 +70,8 @@ export function validateTransactionObjects(transactionObjects) {
       return;
     }
 
-    if (!validSourceTypes.has(to.hbSource)) {
-      to.error = `hbSource ${to.hbSource} is not registered`;
+    if (!validSourceTypes.has(to.hbSource.type)) {
+      to.error = `hbSource ${to.hbSource.type} is not registered`;
       invalid.push(to);
       return;
     }
@@ -133,11 +133,11 @@ export function validateTransactionObjects(transactionObjects) {
 function groupTransactionObjects(transactionObjects) {
   let grouped = {};
   transactionObjects.forEach((transactionObject) => {
-    let srcTransObj = grouped[transactionObject.hbSource] || {};
+    let srcTransObj = grouped[transactionObject.hbSource.type] || {};
     let destTransObj = srcTransObj[transactionObject.hbDestination.type] || [];
     destTransObj.push(transactionObject);
     srcTransObj[transactionObject.hbDestination.type] = destTransObj;
-    grouped[transactionObject.hbSource] = srcTransObj;
+    grouped[transactionObject.hbSource.type] = srcTransObj;
   });
 
   return grouped;

@@ -16,7 +16,9 @@ describe('ppiTest', () => {
               name: '/19968336/header-bid-tag-0',
             }
           },
-          hbSource: 'auction',
+          hbSource: {
+            type: 'auction',
+          },
           hbDestination: {
             type: 'gpt',
             values: { div: 'test-1' }
@@ -27,7 +29,9 @@ describe('ppiTest', () => {
           hbInventory: {
             type: TransactionType.SLOT,
           },
-          hbSource: 'auction',
+          hbSource: {
+            type: 'auction',
+          },
           hbDestination: {
             type: 'gpt',
             values: { div: 'test-1' }
@@ -41,13 +45,15 @@ describe('ppiTest', () => {
               name: '/19968336/header-bid-tag-0',
             }
           },
-          hbSource: 'gpt',
+          hbSource: {
+            type: 'gpt',
+          },
           hbDestination: {
             type: 'gpt',
             values: { div: 'test-1' }
           }
         },
-        // not existing destination.tpye
+        // not existing destination.type
         {
           hbInventory: {
             type: TransactionType.SLOT,
@@ -55,7 +61,9 @@ describe('ppiTest', () => {
               name: '/19968336/header-bid-tag-0',
             }
           },
-          hbSource: 'auction',
+          hbSource: {
+            type: 'auction',
+          },
           hbDestination: {
           }
         },
@@ -67,7 +75,9 @@ describe('ppiTest', () => {
               name: 'header-bid-tag-0',
             }
           },
-          hbSource: 'auction',
+          hbSource: {
+            type: 'auction',
+          },
           hbDestination: {
             type: 'gpts',
             values: { div: 'test-1' }
@@ -82,7 +92,9 @@ describe('ppiTest', () => {
             },
             sizes: '1x1'
           },
-          hbSource: 'auction',
+          hbSource: {
+            type: 'auction',
+          },
           hbDestination: {
             type: 'gpt',
           }
@@ -107,7 +119,9 @@ describe('ppiTest', () => {
               name: '/19968336/header-bid-tag-0',
             }
           },
-          hbSource: 'auction',
+          hbSource: {
+            type: 'auction',
+          },
           sizes: [1, 1],
           hbDestination: {
             type: 'gpt',
@@ -122,7 +136,9 @@ describe('ppiTest', () => {
               name: '/19968336/header-bid-tag-0',
             }
           },
-          hbSource: 'auction',
+          hbSource: {
+            type: 'auction',
+          },
           sizes: [[1, 1], 2],
           hbDestination: {
             type: 'gpt',
@@ -204,7 +220,9 @@ describe('ppiTest', () => {
             name: 'test-1',
           }
         },
-        hbSource: 'cache',
+        hbSource: {
+          type: 'cache',
+        },
         hbDestination: {
           type: 'page',
           values: { div: 'test-1' }
@@ -217,7 +235,9 @@ describe('ppiTest', () => {
             name: 'cannot match',
           }
         },
-        hbSource: 'cache',
+        hbSource: {
+          type: 'cache',
+        },
         hbDestination: {
           type: 'page',
           values: { div: 'test-2' }
@@ -230,7 +250,9 @@ describe('ppiTest', () => {
             name: '/19968336/header-bid-tag-0',
           }
         },
-        hbSource: 'cache',
+        hbSource: {
+          type: 'cache',
+        },
         hbDestination: {
           type: 'page',
           values: { div: 'test-5' }
@@ -256,7 +278,7 @@ describe('ppiTest', () => {
       });
       let tos = utils.deepClone(transactionObjects);
       tos.forEach(to => {
-        to.hbSource = 'auction';
+        to.hbSource.type = 'auction';
         to.hbDestination = {
           type: 'cache',
         }

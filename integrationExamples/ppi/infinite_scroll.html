@@ -95,7 +95,9 @@
                         hbInventory: {
                             type: 'AUPAutoSlots',
                         },
-                        hbSource: 'auction',
+                        hbSource: {
+                            type: 'auction',
+                        },
                         hbDestination: {
                             type: 'gpt',
                         }
@@ -105,7 +107,9 @@
                         hbInventory: {
                             type: 'AUPAutoSlots',
                         },
-                        hbSource: 'auction',
+                        hbSource: {
+                            type: 'auction',
+                        },
                         hbDestination: {
                             type: 'cache',
                         }
@@ -159,12 +163,14 @@
             // refresh from cache and cache new bids
             let tos = [{
                 hbInventory: {
-                    type: 'AUPSlotName',
+                    type: 'AUPSlotPath',
                     values: {
                         name: '/19968336/header-bid-tag-0',
                     },
                 },
-                hbSource: 'cache',
+                hbSource: {
+                    type: 'cache',
+                },
                 hbDestination: {
                     type: 'gpt',
                     values: {
@@ -176,12 +182,14 @@
             // cache new bids for the next page
             {
                 hbInventory: {
-                    type: 'AUPSlotName',
+                    type: 'AUPSlotPath',
                     values: {
                         name: '/19968336/header-bid-tag-0',
                     },
                 },
-                hbSource: 'auction',
+                hbSource: {
+                    type: 'auction',
+                },
                 hbDestination: {
                     type: 'cache',
                 }

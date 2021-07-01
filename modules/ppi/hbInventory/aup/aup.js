@@ -408,7 +408,9 @@ export function transformAutoSlots(transactionObject) {
         },
         ortb2Imp: transactionObject.hbInventory.ortb2Imp,
       },
-      hbSource: transactionObject.hbSource,
+      hbSource: {
+        type: transactionObject.hbSource.type,
+      },
       hbDestination: transactionObject.hbDestination,
     };
 
