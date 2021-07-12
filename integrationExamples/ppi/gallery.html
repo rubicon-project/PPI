@@ -94,12 +94,14 @@
                     // initial auction and render ads for the first slide
                     {
                         hbInventory: {
-                            type: 'AUPSlotName',
+                            type: 'AUPSlotPath',
                             values: {
                                 name: '/19968336/header-bid-tag-0',
                             },
                         },
-                        hbSource: 'auction',
+                        hbSource: {
+                            type: 'auction',
+                        },
                         hbDestination: {
                             type: 'gpt',
                             values: { div: 'test-1' }
@@ -108,12 +110,14 @@
                     // cache new bids for the next slide
                     {
                         hbInventory: {
-                            type: 'AUPSlotName',
+                            type: 'AUPSlotPath',
                             values: {
                                 name: '/19968336/header-bid-tag-0',
                             },
                         },
-                        hbSource: 'auction',
+                        hbSource: {
+                            type: 'auction',
+                        },
                         hbDestination: {
                             type: 'cache',
                         }
@@ -166,12 +170,14 @@
                     // read from cache and render
                     {
                         hbInventory: {
-                            type: 'AUPSlotName',
+                            type: 'AUPSlotPath',
                             values: {
                                 name: '/19968336/header-bid-tag-0',
                             },
                         },
-                        hbSource: 'cache',
+                        hbSource: {
+                            type: 'cache',
+                        },
                         hbDestination: {
                             type: 'gpt',
                             values: { div: 'test-1' }
@@ -180,12 +186,14 @@
                     // cache new bids for the next slide
                     {
                         hbInventory: {
-                            type: 'AUPSlotName',
+                            type: 'AUPSlotPath',
                             values: {
                                 name: '/19968336/header-bid-tag-0',
                             },
                         },
-                        hbSource: 'auction',
+                        hbSource: {
+                            type: 'auction',
+                        },
                         hbDestination: {
                             type: 'cache',
                         }

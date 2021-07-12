@@ -350,10 +350,10 @@ export function applyFirstPartyData(adUnit, adUnitPattern, transactionObject) {
     return;
   }
 
-  utils.deepSetValue(adUnit, 'ortb2Imp.ext.data.pbAdSlot', slotName);
-  utils.deepSetValue(adUnit, 'ortb2Imp.ext.data.adServer', {
+  utils.deepSetValue(adUnit, 'ortb2Imp.ext.data.pbadslot', slotName);
+  utils.deepSetValue(adUnit, 'ortb2Imp.ext.data.adserver', {
     name: 'gam',
-    adSlot: slotName
+    adslot: slotName
   });
 }
 
@@ -408,7 +408,9 @@ export function transformAutoSlots(transactionObject) {
         },
         ortb2Imp: transactionObject.hbInventory.ortb2Imp,
       },
-      hbSource: transactionObject.hbSource,
+      hbSource: {
+        type: transactionObject.hbSource.type,
+      },
       hbDestination: transactionObject.hbDestination,
     };
 
