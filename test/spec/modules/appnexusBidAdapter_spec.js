@@ -679,7 +679,8 @@ describe('AppNexusAdapter', function () {
         'timeout': 3000,
         'gdprConsent': {
           consentString: consentString,
-          gdprApplies: true
+          gdprApplies: true,
+          addtlConsent: '1~7.12.35.62.66.70.89.93.108'
         }
       };
       bidderRequest.bids = bidRequests;
@@ -691,6 +692,7 @@ describe('AppNexusAdapter', function () {
       expect(payload.gdpr_consent).to.exist;
       expect(payload.gdpr_consent.consent_string).to.exist.and.to.equal(consentString);
       expect(payload.gdpr_consent.consent_required).to.exist.and.to.be.true;
+      expect(payload.gdpr_consent.addtl_consent).to.exist.and.to.deep.equal([7, 12, 35, 62, 66, 70, 89, 93, 108]);
     });
 
     it('should add us privacy string to payload', function() {
@@ -873,9 +875,14 @@ describe('AppNexusAdapter', function () {
       const bidRequest = Object.assign({}, bidRequests[0], {
         userId: {
           tdid: 'sample-userid',
+          uid2: { id: 'sample-uid2-value' },
           criteoId: 'sample-criteo-userid',
           netId: 'sample-netId-userid',
-          idl_env: 'sample-idl-userid'
+          idl_env: 'sample-idl-userid',
+          flocId: {
+            id: 'sample-flocid-value',
+            version: 'chrome.1.0'
+          }
         }
       });
 
@@ -893,6 +900,11 @@ describe('AppNexusAdapter', function () {
       });
 
       expect(payload.eids).to.deep.include({
+        source: 'chrome.com',
+        id: 'sample-flocid-value'
+      });
+
+      expect(payload.eids).to.deep.include({
         source: 'netid.de',
         id: 'sample-netId-userid',
       });
@@ -900,7 +912,13 @@ describe('AppNexusAdapter', function () {
       expect(payload.eids).to.deep.include({
         source: 'liveramp.com',
         id: 'sample-idl-userid'
-      })
+      });
+
+      expect(payload.eids).to.deep.include({
+        source: 'uidapi.com',
+        id: 'sample-uid2-value',
+        rti_partner: 'UID2'
+      });
     });
 
     it('should populate iab_support object at the root level if omid support is detected', function () {
@@ -1280,6 +1298,21 @@ describe('AppNexusAdapter', function () {
       }
       let result = spec.interpretResponse({ body: responseAdvertiserId }, {bidderRequest});
       expect(Object.keys(result[0].meta)).to.include.members(['advertiserId']);
-    })
+    });
+
+    it('should add advertiserDomains', function() {
+      let responseAdvertiserId = deepClone(response);
+      responseAdvertiserId.tags[0].ads[0].adomain = ['123'];
+
+      let bidderRequest = {
+        bids: [{
+          bidId: '3db3773286ee59',
+          adUnitCode: 'code'
+        }]
+      }
+      let result = spec.interpretResponse({ body: responseAdvertiserId }, {bidderRequest});
+      expect(Object.keys(result[0].meta)).to.include.members(['advertiserDomains']);
+      expect(Object.keys(result[0].meta.advertiserDomains)).to.deep.equal([]);
+    });
   });
 });

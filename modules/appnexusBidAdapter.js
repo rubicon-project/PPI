@@ -215,6 +215,13 @@ export const spec = {
         consent_string: bidderRequest.gdprConsent.consentString,
         consent_required: bidderRequest.gdprConsent.gdprApplies
       };
+
+      if (bidderRequest.gdprConsent.addtlConsent && bidderRequest.gdprConsent.addtlConsent.indexOf('~') !== -1) {
+        let ac = bidderRequest.gdprConsent.addtlConsent;
+        // pull only the ids from the string (after the ~) and convert them to an array of ints
+        let acStr = ac.substring(ac.indexOf('~') + 1);
+        payload.gdpr_consent.addtl_consent = acStr.split('.').map(id => parseInt(id, 10));
+      }
     }
 
     if (bidderRequest && bidderRequest.uspConsent) {
@@ -244,10 +251,12 @@ export const spec = {
     if (bidRequests[0].userId) {
       let eids = [];
 
+      addUserId(eids, utils.deepAccess(bidRequests[0], `userId.flocId.id`), 'chrome.com', null);
       addUserId(eids, utils.deepAccess(bidRequests[0], `userId.criteoId`), 'criteo.com', null);
       addUserId(eids, utils.deepAccess(bidRequests[0], `userId.netId`), 'netid.de', null);
       addUserId(eids, utils.deepAccess(bidRequests[0], `userId.idl_env`), 'liveramp.com', null);
       addUserId(eids, utils.deepAccess(bidRequests[0], `userId.tdid`), 'adserver.org', 'TDID');
+      addUserId(eids, utils.deepAccess(bidRequests[0], `userId.uid2.id`), 'uidapi.com', 'UID2');
 
       if (eids.length) {
         payload.eids = eids;
@@ -577,6 +586,11 @@ function newBid(serverBid, rtbBid, bidderRequest) {
       dealCode: rtbBid.deal_code
     }
   };
+
+  // WE DON'T FULLY SUPPORT THIS ATM - future spot for adomain code; creating a stub for 5.0 compliance
+  if (rtbBid.adomain) {
+    bid.meta = Object.assign({}, bid.meta, { advertiserDomains: [] });
+  }
 
   if (rtbBid.advertiser_id) {
     bid.meta = Object.assign({}, bid.meta, { advertiserId: rtbBid.advertiser_id });

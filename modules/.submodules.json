@@ -36,12 +36,16 @@
   ],
   "rtdModule": [
     "browsiRtdProvider",
+    "dgkeywordRtdProvider",
     "haloRtdProvider",
-    "reconciliationRtdProvider",
     "geoedgeRtdProvider",
-    "sirdataRtdProvider",
     "audigentRtdProvider",
-    "jwplayerRtdProvider"
+    "iasRtdProvider",
+    "jwplayerRtdProvider",
+    "optimeraRtdProvider",
+    "permutiveRtdProvider",
+    "reconciliationRtdProvider",
+    "sirdataRtdProvider"
   ],
   "ppi": [
     "cacheDestination",
@@ -51,5 +55,9 @@
     "auctionSource",
     "cacheSource",
     "aup"
+  ],
+  "fpdModule": [
+    "enrichmentFpdModule",
+    "validationFpdModule"
   ]
 }
